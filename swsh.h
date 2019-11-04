@@ -18,10 +18,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <signal.h>
 #include <sys/stat.h>
+#include <assert.h>
 
 /* function prototypes */
 void eval(char *cmdline);
@@ -31,9 +33,71 @@ void al (int sig) {
 	printf("\nswsh> ");
 	fflush(stdout);
 }
-// type2
+// type2  = {"head","tail","cat","cp"};
+void head_command(char** argv){
+	struct stat file_info;
+	stat(argv[1],&file_info);
+	int file_size = file_info.st_size;
+	int fd = open(argv[1], O_RDONLY);
+	char* s1 = (char*)malloc(sizeof(char)*file_size);
+	int result = read(fd,s1,sizeof(char)*file_size);
+	if(result != EOF){
+		int sp=0;
+		int times=0;
+		while((sp<file_size) | (times<5) ){
+			char* str = (char*)malloc(sizeof(char)*1024);
+			int i;
+			for(i=0; (s1[sp] != '\n'); i++,sp++){				
+				str[i] = s1[sp];
+			} str[i] = '\n'; // i = str len	
+			sp++;
+			//assert(write(1,str,sizeof(char)*i) <0);	
+			write(1,str,sizeof(char)*(i+1));
+			times++;	
+			free(str);
+		}
+	} else {
+		fprintf(stderr,"%s: Cannot read file.\n", argv[1]);
+	}
+	//char* buf = "\n";
+	//assert( write(1,buf,sizeof(char)) < 0);
+	free(s1);	
+}
 void cat_command(char** argv){
+	struct stat file_info;
+	stat(argv[1],&file_info);
+	int file_size = file_info.st_size;
+	int fd = open(argv[1], O_RDONLY);
+	char* s1 = (char*)malloc(sizeof(char)*file_size);
+	int result = read(fd,s1,sizeof(char)*file_size);
+	if(result != EOF){
+		int trash = write(1,s1,sizeof(char)*file_size);
+		trash++;
+	} else {
+		fprintf(stderr,"%s: Cannot read file.\n", argv[1]);
+	}
+	//char* buf = "\n";
+	//assert( write(1,buf,sizeof(char)) < 0);
+	free(s1);
+}
+void cp_command(char** argv){
+	int fd1 = open(argv[1], O_RDONLY);
+	int fd2 = open(argv[2],O_RDWR | O_CREAT, 0755);
 
+	struct stat file_info;
+	stat(argv[1],&file_info);
+	int file_size = file_info.st_size;
+	char* s1 = (char*)malloc(sizeof(char)*file_size);
+
+	int result = read(fd1,s1,sizeof(char)*file_size);
+	if(result != EOF){
+		int trash = write(fd2,s1,sizeof(char)*file_size);
+		trash++;
+	} else {
+		fprintf(stderr,"%s: Cannot read file.\n", argv[1]);
+	}
+	free(s1);
+	printf("cp %s to %s\n",argv[1],argv[2]);
 }
 
 //type3
@@ -104,6 +168,16 @@ void branch(int check, char** argv,int bg,char* cmdline){
    				execvp(argv[0],argv);
    			} else{
    				printf("type2 begin\n");// type2 
+   				if(!strcmp(argv[0],"cat")){
+   					cat_command(argv); // branch3
+   				} else if(!strcmp(argv[0],"cp")){
+   					cp_command(argv);
+   				} else if(!strcmp(argv[0],"head")){
+   					head_command(argv);
+   				}else {
+   					printf("not complete\n");
+   				}
+   				exit(0);
    			}
    		} else { 
    			//wait(NULL); 
