@@ -34,10 +34,23 @@ void al (int sig) {
 }
 // type2  = {"head","tail","cat","cp"};
 void tail_command(char** argv){
+	int num =10;
 	struct stat file_info;
-	stat(argv[1],&file_info);
-	int file_size = file_info.st_size;
-	int fd = open(argv[1], O_RDONLY);
+	int file_size;
+	int fd;
+	if(argv[2] == NULL){
+		stat(argv[1],&file_info);
+		file_size = file_info.st_size;
+		fd = open(argv[1], O_RDONLY);		
+	} else{
+		if(!strcmp(argv[1],"-n")){
+			stat(argv[3],&file_info);
+			num = atoi(argv[2]);
+			file_size = file_info.st_size;	
+			fd = open(argv[3], O_RDONLY);		
+		} else fprintf(stderr,"%s: wrong option\n", argv[1]);
+		
+	}
 	char* s1 = (char*)malloc(sizeof(char)*file_size);
 	int result = read(fd,s1,sizeof(char)*file_size);
 	int times=0;
@@ -48,7 +61,7 @@ void tail_command(char** argv){
 		for(; s1[sp] != '\n'; sp--);
 		if(s1[sp] == '\n') {
 			times++; 
-			if(times >= 5) break;
+			if(times >= num) break;
 			else sp--;
 		}
 	}
@@ -60,28 +73,46 @@ void tail_command(char** argv){
 	free(s1);
 }
 void head_command(char** argv){
+	int num =10;
 	struct stat file_info;
-	stat(argv[1],&file_info);
-	int file_size = file_info.st_size;
-	int fd = open(argv[1], O_RDONLY);
+	int file_size;
+	int fd;
+	if(argv[2] == NULL){
+		stat(argv[1],&file_info);
+		file_size = file_info.st_size;
+		fd = open(argv[1], O_RDONLY);		
+	} else{
+		if(!strcmp(argv[1],"-n")){
+			stat(argv[3],&file_info);
+			num = atoi(argv[2]);
+			file_size = file_info.st_size;	
+			fd = open(argv[3], O_RDONLY);		
+		} else fprintf(stderr,"%s: wrong option\n", argv[1]);
+		
+	}
+	
+
 	char* s1 = (char*)malloc(sizeof(char)*file_size);
 	int result = read(fd,s1,sizeof(char)*file_size);
 	if(result != EOF){
 		int sp=0;
 		int times=0;
-		while((sp<file_size)& (times<5) ){
+		while((sp<file_size) ){
 			char* str = (char*)malloc(sizeof(char)*1024);
 			int i;
 			for(i=0; (s1[sp] != '\n'); i++,sp++){				
 				str[i] = s1[sp];
-			} str[i] = '\n'; // i = str len	
+			} 
+			if(times != (num-1)) str[i] = '\n'; // i = str len	
+			else { str[i] = '\0'; }
 			sp++;
 			//assert(write(1,str,sizeof(char)*i) <0);	
 			write(1,str,sizeof(char)*(i+1));
 			times++;	
 			free(str);
+			if(times>=num) break;
 		}
-	} else {
+	} else if(argv[1] == NULL) {
 		fprintf(stderr,"%s: Cannot read file.\n", argv[1]);
 	}
 	//char* buf = "\n";
@@ -96,7 +127,7 @@ void cat_command(char** argv){
 	char* s1 = (char*)malloc(sizeof(char)*file_size);
 	int result = read(fd,s1,sizeof(char)*file_size);
 	if(result != EOF){
-		int trash = write(1,s1,sizeof(char)*file_size);
+		int trash = write(1,s1,sizeof(char)*(file_size-1));
 		trash++;
 	} else {
 		fprintf(stderr,"%s: Cannot read file.\n", argv[1]);
