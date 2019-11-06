@@ -44,7 +44,7 @@ void head_command(char** argv){
 	if(result != EOF){
 		int sp=0;
 		int times=0;
-		while((sp<file_size) | (times<5) ){
+		while((sp<file_size)& (times<5) ){
 			char* str = (char*)malloc(sizeof(char)*1024);
 			int i;
 			for(i=0; (s1[sp] != '\n'); i++,sp++){				
