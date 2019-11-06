@@ -23,7 +23,6 @@
 #include <sys/wait.h>
 #include <signal.h>
 #include <sys/stat.h>
-#include <assert.h>
 
 /* function prototypes */
 void eval(char *cmdline);
@@ -34,6 +33,32 @@ void al (int sig) {
 	fflush(stdout);
 }
 // type2  = {"head","tail","cat","cp"};
+void tail_command(char** argv){
+	struct stat file_info;
+	stat(argv[1],&file_info);
+	int file_size = file_info.st_size;
+	int fd = open(argv[1], O_RDONLY);
+	char* s1 = (char*)malloc(sizeof(char)*file_size);
+	int result = read(fd,s1,sizeof(char)*file_size);
+	int times=0;
+	int sp = lseek(fd,-2,SEEK_END);
+	//printf("end:%c\n",s1[sp]);
+	while(1){
+		
+		for(; s1[sp] != '\n'; sp--);
+		if(s1[sp] == '\n') {
+			times++; 
+			if(times >= 5) break;
+			else sp--;
+		}
+	}
+	char * p = s1+sp+1;
+	*(s1+file_size-1) = '\0';
+	//printf("p is:%s\n",p);
+	write(1,p,file_size-sp+1);
+	//write(1,s1+sp,end-sp+1);
+	free(s1);
+}
 void head_command(char** argv){
 	struct stat file_info;
 	stat(argv[1],&file_info);
@@ -174,6 +199,8 @@ void branch(int check, char** argv,int bg,char* cmdline){
    					cp_command(argv);
    				} else if(!strcmp(argv[0],"head")){
    					head_command(argv);
+   				} else if(!strcmp(argv[0],"tail")){
+   					tail_command(argv);
    				}else {
    					printf("not complete\n");
    				}

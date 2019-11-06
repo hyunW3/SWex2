@@ -27,10 +27,17 @@
 
 
 void shellstart(){
+	int in=0;
 	while (1) {
 		char cmdline[MAXLINE]; /* Command line */
 		char* ret;
-		printf("swsh> ");                   
+		if(in == 0){
+			printf("swsh> "); 
+		} else {
+			printf("\nswsh> ");
+		}
+		
+		//printf("swsh> ");          
 		ret = fgets(cmdline, MAXLINE, stdin); 
 		if (feof(stdin) || ret == NULL)
 		    exit(0);
@@ -39,6 +46,7 @@ void shellstart(){
 
 		eval(cmdline);
 		fflush(stdout);
+		in =1;
 	}
 }
 int main() 
