@@ -29,16 +29,16 @@ int main (int argc, char *argv[]) {
 		printf("listen() failed.\n");
 		exit(3);
 	}
-	if(fork() == 0){
+//	if(fork() == 0){
    while (1) { 
 		caddrlen = sizeof(caddr);
 		if ((connfd = accept(listenfd, (struct sockaddr *)&caddr,&caddrlen)) < 0) {
 			printf ("accept() failed.\n");
 			continue;
 	}
-//       int random = rand()*99;
-        int random = 20;
-        write(connfd,random,sizeof(int));
+       int random = rand() % 100;
+//        int random = 20;
+//        write(connfd,random,sizeof(int));
 
 	h = gethostbyaddr((const char *)&caddr.sin_addr.s_addr, sizeof(caddr.sin_addr.s_addr), AF_INET);
 	printf("server connected to %s (%s)\n",
@@ -63,6 +63,6 @@ int main (int argc, char *argv[]) {
 		}
 		fflush(stdout);
 	}
-	}
+//	}
    }
 }
