@@ -26,7 +26,7 @@
 #include <sys/stat.h>
 
 /* function prototypes */
-void eval(char ** argv,char* cmdline,int bg);
+void eval(char *cmdline);
 int parseline(char *buf, char **argv);
 int builtin_command(char **argv); 
 void al (int sig) {
@@ -100,93 +100,100 @@ void branch(int check, char** argv,int bg,char* cmdline){
    		}
    	  }
 }
-
-int redi_in(char** argv){
-	int i;
-	int fd;
-	
-}
 /* $end shellmain */
-char** divide(char** argv,char* a){
-	int location=-1;
-	int i;
-	for(int i=1; argv[i] != NULL; i++){
-		if(!strcmp(argv[i],a)) {
-			location = i; break;
-		}
+  
+void command_eval(int bg, pid_t pid,char **argv){
+	int check = builtin_command(argv);
+   if (!check) { // no check : no builtin_command
+	if ((pid = fork()) == 0) {   /* Child runs user job */
+	    if (execv(argv[0], argv) < 0) {
+		fprintf(stderr,"%s: Command not found.\n", argv[0]);
+		exit(0);
+	    }
 	}
-	printf("location:%d\n",location);
-	if(location <0){
-		return NULL;
-	} else {
-		char** front = malloc(sizeof(char*)*(location+1));
-		for(i=0; i < location; i++){
-			front[i] = malloc(sizeof(char*)*50);
-			strcpy(front[i],argv[i]);
-			//printf("%s ",argv[i]);
-		}
-		front[location] =NULL;
-		//printf("back:\n");
-		for(i= location+1; argv[i] != NULL; i++){
-			strcpy(argv[i-location-1],argv[i]);
-			//printf("%s ",argv[i]);
-		}
-		argv[i-location-1] = '\0';
-		printf("divide\nfront:");
-		for(i=0; front[i] != NULL; i++){
-			printf("%dth:%s\n",i,front[i]);
-		}		
-		printf("back:");
-		for(i=0; argv[i] != NULL; i++){
-			printf("%s ",argv[i]);
-		}
-		printf("\n");
-		return front;
+
+	/* Parent waits for foreground job to terminate */
+	if (!bg) {
+	    int status;
+	    if (waitpid(pid, &status, 0) < 0)
+			printf("waitfg: waitpid error");
 	}
-	
-	return NULL;
+	else
+	    printf("%d %s", pid, cmdline);
+   } else { // is builtin command
+   		branch(check,argv,bg,cmdline); 
+   }
 }
 /* $begin eval */
 /* eval - Evaluate a command line */
-void eval(char ** argv,char* cmdline,int bg) 
-{        
+void eval(char *cmdline) 
+{
+    char *argv[MAXARGS]; /* Argument list execve() */
+    char buf[MAXLINE];   /* Holds modified command line */
+    int bg;              /* Should the job run in bg or fg? */
     pid_t pid;           /* Process id */
+    
+    strcpy(buf, cmdline);
+    bg = parseline(buf, argv); 
     if (argv[0] == NULL)  
 	return;   /* Ignore empty lines */
-    int in =0;
-	int out =0; 
-	int command=1;
-    for(int i=0; argv[i] != NULL; i++){
-		if(!strcmp(argv[i],"<")) in=1;
-		if(!strcmp(argv[i],">") || !strcmp(argv[i],">>")) out=1;
-		if(!strcmp(argv[i],"|")) command++; 
 
-	} // whether in,out exist, how many command in argv
-    int check = builtin_command(argv);
-   if (!check) { // no check : no builtin_command
-		if ((pid = fork()) == 0) {   /* Child runs user job */
-		    if (execv(argv[0], argv) < 0) {
-			fprintf(stderr,"%s: Command not found.\n", argv[0]);
-			exit(0);
-	 	   }
-		}
+    // check redirect & pipeline
+    in = 0;	out = 0; command =1;
+	char* location = NULL;
+/*
+	for(int i=0; argv[i] != NULL i++){
+		if(!strcmp(argv[i],"<")) in=1; location = i; break;
+		if(!strcmp(argv[i],">") || !strcmp(argv[i],">>")) out=1; location = i; break;
+		if(!strcmp(argv[i],"|")) command=2; location = i; break;
 
-		/* Parent waits for foreground job to terminate */
-		if (!bg) {
-	 	  int status;
-	  	  if (waitpid(pid, &status, 0) < 0)
-				printf("waitfg: waitpid error");
+	}
+	*/
+	if((location = strchr(argv,"<")) != NULL) in=1;
+	else if ((location = strchr(argv,">")) != NULL) out=1; 
+	else if ((location = strchr(argv,">>")) != NULL) out=1; 
+	else if ((location = strchr(argv,"|")) != NULL) command = 2;
+
+if(location == NULL){
+   	command_eval(bg,pid,argv);
+} else { // in,out > 0 , command > 1 // location found
+	inf fd[2];
+	if(pipe(fd) <0){
+		perror("pipe error\n");
+		exit(-1);
+	}
+	if(in == 1){
+		if((pid=fork()) == 0){
+			close(fd[0]);
+			
+			if((fd[2] = open(location[1], O_RDONLY)) < 0){
+				perror(location[1]); return -1;
+			}
+			dup2(fd[2],1);
 		}
-		else
-	 	   printf("%d %s", pid, cmdline);
-   	} else { // is builtin command
-   		branch(check,argv,bg,cmdline); 
-   	}
+		int status;
+		if (waitpid(pid, &status, 0) < 0){
+			printf("waitfg: waitpid error");
+		} else {
+			close(fd[1]);
+			dup2(fd[0],0);
+			eval()
+		}
+	} else if(out == 1){
+
+	} else if(command ==2){
+
+	} else {
+		fprintf(stderr,"wrong branch %d\n",location,)
+	}
+}
     return;
 }
+ 
 
 /* If first arg is a builtin command, run it and return true */
-int builtin_command(char **argv) {
+int builtin_command(char **argv) 
+{
 	char* type1[6] = {"ls","man","grep","sort","awk","bc"}; //6
 	char* type2[4] = {"head","tail","cat","cp"};
 	char* type3[3] = {"mv","rm","cd"};
@@ -252,14 +259,5 @@ int parseline(char *buf, char **argv)
     return bg;
 }
 /* $end parseline */
-/*
-    int in =0;
-    int out=0; 
-    int command=1;
-    for(int i=0; argv[i] != NULL i++){
-		if(!strcmp(argv[i],"<")) in=1; location = i; break;
-		if(!strcmp(argv[i],">") || !strcmp(argv[i],">>")) out=1; location = i; break;
-		if(!strcmp(argv[i],"|")) command++; 
 
-	}
-*/
+

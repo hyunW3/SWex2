@@ -41,10 +41,12 @@ void shellstart(){
 		ret = fgets(cmdline, MAXLINE, stdin); 
 		if (feof(stdin) || ret == NULL)
 		    exit(0);
-
+		char *argv[MAXARGS]; /* Argument list execve() */
 		/* Evaluate */
-
-		eval(cmdline);
+   		char buf[MAXLINE];   /* Holds modified command line */
+   		strcpy(buf, cmdline);
+   		int bg = parseline(buf, argv); /* Should the job run in bg or fg? */
+		eval(argv,cmdline,bg);
 		fflush(stdout);
 		in =1;
 	}
