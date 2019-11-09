@@ -120,23 +120,24 @@ char** divide(char** argv,char* a){
 		return NULL;
 	} else {
 		char** front = malloc(sizeof(char*)*(location+1));
+		printf("front:\n");
 		for(i=0; i < location; i++){
 			front[i] = malloc(sizeof(char*)*50);
 			strcpy(front[i],argv[i]);
-			//printf("%s ",argv[i]);
+			printf("%s ",argv[i]);
 		}
 		front[location] =NULL;
-		//printf("back:\n");
+		printf("\nback:\n");
 		for(i= location+1; argv[i] != NULL; i++){
 			strcpy(argv[i-location-1],argv[i]);
-			//printf("%s ",argv[i]);
+			printf("%s ",argv[i]);
 		}
 		argv[i-location-1] = '\0';
-		printf("divide\nfront:");
+		printf("\ndivide\nfront:");
 		for(i=0; front[i] != NULL; i++){
-			printf("%dth:%s\n",i,front[i]);
+			printf("%s ",front[i]);
 		}		
-		printf("back:");
+		printf("\nback:");
 		for(i=0; argv[i] != NULL; i++){
 			printf("%s ",argv[i]);
 		}
@@ -162,6 +163,29 @@ void eval(char ** argv,char* cmdline,int bg)
 		if(!strcmp(argv[i],"|")) command++; 
 
 	} // whether in,out exist, how many command in argv
+	if(command > 1){
+		int fd[2];
+		if(pipe(fd) <0){
+			perror("pipe error");
+			exit(-1);
+		}
+		if ((pid = fork()) == 0) {
+			close(fd[0]);
+			dup2(fd[1],1);
+			eval(divide(argv,"|"),cmdline,bg);
+			exit(0);
+		}
+		int status;
+	  	  if (waitpid(pid, &status, 0) < 0){
+				printf("waitfg: waitpid error");
+	  	  }else{
+	 	   printf("%d %s", pid, cmdline);
+		}
+		close(fd[1]);
+		dup2(fd[0],0);
+		eval(argv,cmdline,bg);
+		
+	}else {
     int check = builtin_command(argv);
    if (!check) { // no check : no builtin_command
 		if ((pid = fork()) == 0) {   /* Child runs user job */
@@ -183,6 +207,7 @@ void eval(char ** argv,char* cmdline,int bg)
    		branch(check,argv,bg,cmdline); 
    	}
     return;
+}
 }
 
 /* If first arg is a builtin command, run it and return true */
