@@ -26,29 +26,56 @@
 
 
 // type2  = {"head","tail","cat","cp"};
-void tail_command(char** argv){
+void tail_command(char** argv,int pip){
 	int num =10;
 	struct stat file_info;
 	int file_size;
 	int fd;
+	/*
+						for(int i=0; argv[i] != NULL; i++){
+						printf("%d-%s ",i,argv[i]);
+					}				printf("\n");
+				*/
+	printf("pip:%d\n",pip);
 	if(argv[2] == NULL){
-		stat(argv[1],&file_info);
-		file_size = file_info.st_size;
-		fd = open(argv[1], O_RDONLY);		
+		printf("tail (pure)\n");
+		if(pip != 0){
+			fd = pip;
+			stat(pip,&file_info);
+			file_size = file_info.st_size;
+			printf("file_size:%d\n",file_size);
+		} else {
+			printf("argv[1]\n");
+			stat(argv[1],&file_info);
+			file_size = file_info.st_size;
+			fd = open(argv[1], O_RDONLY);
+		}
 	} else{
+		printf("tail -n num\n");
 		if(!strcmp(argv[1],"-n")){
-			stat(argv[3],&file_info);
-			num = atoi(argv[2]);
-			file_size = file_info.st_size;	
-			fd = open(argv[3], O_RDONLY);		
+			if(pip !=0){
+				fd = pip;
+				stat(fd,&file_info);
+				file_size = file_info.st_size;
+				printf("file_size:%d\n",file_size);
+			} else {
+				printf("argv[3]\n");
+				stat(argv[3],&file_info);
+				num = atoi(argv[2]);
+				file_size = file_info.st_size;				
+				fd = open(argv[3], O_RDONLY);	
+			}
+				
 		} else fprintf(stderr,"%s: wrong option\n", argv[1]);
 		
 	}
+
 	char* s1 = (char*)malloc(sizeof(char)*file_size);
 	int result = read(fd,s1,sizeof(char)*file_size);
 	int times=0;
 	int sp = lseek(fd,-2,SEEK_END);
 	//printf("end:%c\n",s1[sp]);
+	if(result != EOF){
 	while(1){
 		
 		for(; s1[sp] != '\n'; sp--);
@@ -58,6 +85,7 @@ void tail_command(char** argv){
 			else sp--;
 		}
 	}
+	}
 	char * p = s1+sp+1;
 	*(s1+file_size-1) = '\0';
 	//printf("p is:%s\n",p);
@@ -65,7 +93,7 @@ void tail_command(char** argv){
 	//write(1,s1+sp,end-sp+1);
 	free(s1);
 }
-void head_command(char** argv){
+void head_command(char** argv,int pip){
 	int num =10;
 	struct stat file_info;
 	int file_size;
@@ -73,13 +101,21 @@ void head_command(char** argv){
 	if(argv[2] == NULL){
 		stat(argv[1],&file_info);
 		file_size = file_info.st_size;
-		fd = open(argv[1], O_RDONLY);		
+		if(pip !=0){
+			fd = pip;
+		} else {
+			fd = open(argv[1], O_RDONLY);
+		}	
 	} else{
 		if(!strcmp(argv[1],"-n")){
 			stat(argv[3],&file_info);
 			num = atoi(argv[2]);
 			file_size = file_info.st_size;	
-			fd = open(argv[3], O_RDONLY);		
+			if(pip !=0){
+				fd = pip;
+			} else {
+				fd = open(argv[3], O_RDONLY);
+			}		
 		} else fprintf(stderr,"%s: wrong option\n", argv[1]);
 		
 	}
@@ -112,7 +148,7 @@ void head_command(char** argv){
 	//assert( write(1,buf,sizeof(char)) < 0);
 	free(s1);	
 }
-void cat_command(char** argv){
+void cat_command(char** argv,int pip){
 	struct stat file_info;
 	stat(argv[1],&file_info);
 	int file_size = file_info.st_size;
