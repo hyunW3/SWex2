@@ -31,13 +31,14 @@ void shellstart(){
 	while (1) {
 		char cmdline[MAXLINE]; /* Command line */
 		char* ret;
+		/*
 		if(in == 0){
 			printf("swsh> "); 
 		} else {
 			printf("\nswsh> ");
 		}
-		
-		//printf("swsh> ");          
+		*/
+		printf("swsh> ");          
 		ret = fgets(cmdline, MAXLINE, stdin); 
 		if (feof(stdin) || ret == NULL)
 		    exit(0);

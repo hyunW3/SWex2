@@ -183,7 +183,7 @@ void eval(char ** argv,char* cmdline,int bg){
 		// back command
 				close(fd[1]);
 
-				//int temp_fd = dup(STDIN_FILENO);
+				int temp_fd = dup(STDIN_FILENO);
 				dup2(fd[0],0);
 
 				//char * s = (char*)malloc(sizeof(char)*MAXLINE);
@@ -196,7 +196,7 @@ void eval(char ** argv,char* cmdline,int bg){
 				//printf("ptr:%s\n",ptr);
 				//eval(argv,ptr,bg,fd[0]);
 				eval(back,ptr,bg);
-				//dup2(temp_fd,STDIN_FILENO); // restore	
+				dup2(temp_fd,STDIN_FILENO); // restore	
 				free(back);				
 			//}
 
@@ -211,10 +211,11 @@ void eval(char ** argv,char* cmdline,int bg){
 
    int check = builtin_command(argv);
    //printf("execute %s \n",argv[0]);
-   //printf("check:%d,argv[0]:%s\n",check,argv[0]);
+   //printf("argv[0]:%s\n",argv[0]);
    fflush(stdout);
    if (!check) { // no check : no builtin_command
 		if ((pid = fork()) == 0) {   /* Child runs user job */
+
 		    if (execv(argv[0], argv) < 0) {
 			fprintf(stderr,"%s: Command not found.\n", argv[0]);
 			exit(0);
@@ -224,15 +225,16 @@ void eval(char ** argv,char* cmdline,int bg){
 		/* Parent waits for foreground job to terminate */
 		if (!bg) {
 	 	  int status;
-	  	  if (waitpid(pid, &status, 0) < 0)
+	  	  if (waitpid(pid, &status, 0) < 0){
 				printf("waitfg: waitpid error");
+	  	  } 
 		}
 		else
 	 	   printf("%d %s", pid, cmdline);
    	} else { // is builtin command
    		branch(check,argv,bg); 
    	}
-   	printf("end here\n");
+   	//printf("end here\n");
 	fflush(stdout);
 	}
     return;
