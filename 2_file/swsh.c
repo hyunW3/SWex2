@@ -38,7 +38,14 @@ void shellstart(){
 			printf("\nswsh> ");
 		}
 		*/
-		printf("swsh> ");          
+		char cwd[1024];
+		char* result = getcwd(cwd,sizeof(cwd));	
+		if(result != NULL){
+			printf("%s$swsh> ",cwd);
+		} else {
+			printf("$swsh> ");
+		}
+		          
 		ret = fgets(cmdline, MAXLINE, stdin); 
 		if (feof(stdin) || ret == NULL)
 		    exit(0);
