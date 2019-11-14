@@ -19,6 +19,7 @@ int main(int argc, char** argv) {
 	int check = 0;
 	int pos =-1;
 	// i think this should be in shell code
+	/*
 	for(int i=0; i< argc; i++){
 		if(!strcmp(argv[i],"<")){
 			check =1; pos =i; break;
@@ -32,8 +33,9 @@ int main(int argc, char** argv) {
 		file_size = file_info.st_size;
 		fd = open(argv[pos+1], O_RDONLY);	
 			
-	}else if(argc <= 2){
-		if(argc == 1){
+	}else */
+	if(argc <= 2){ 
+		if(argc == 1){ // ls | head 
 			fd = dup(0);
 			file_size = MAXARGS;
 			//printf("stdin\n");
@@ -69,7 +71,7 @@ int main(int argc, char** argv) {
 	if(result != EOF){
 		int sp=0;
 		int times=0;
-		while((sp<file_size) ){
+		while((sp<result) ){
 			char* str = (char*)malloc(sizeof(char)*1024);
 			int i;
 			for(i=0; (s1[sp] != '\n'); i++,sp++){				
@@ -92,6 +94,6 @@ int main(int argc, char** argv) {
 	//char* buf = "\n";
 	//assert( write(1,buf,sizeof(char)) < 0);
 	free(s1);	
-	write(1,"\n",sizeof(char));
+	//write(1,"\n",sizeof(char));
 }
 

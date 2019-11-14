@@ -33,7 +33,7 @@ void al (int sig) {
 	printf("\nswsh> ");
 	fflush(stdout);
 }
-
+int gpid;
 /*
 	char* type1[6] = {"ls","man","grep","sort","awk","bc"}; //6
 	char* type2[4] = {"head","tail","cat","cp"};
@@ -123,10 +123,18 @@ void eval(char ** argv,char* cmdline,int bg){
     if (argv[0] == NULL) return;   /* Ignore empty lines */
     int in =0;
 	int out =0; 
+	int pos =-1;
 	int command=1;
     for(int i=0; argv[i] != NULL; i++){
-		if(!strcmp(argv[i],"<")) in=1;
-		if(!strcmp(argv[i],">") || !strcmp(argv[i],">>")) out=1;
+		if(!strcmp(argv[i],"<")) {
+			in=1; pos =i;
+		}
+		if(!strcmp(argv[i],">")) {
+			out=1; pos = i;
+		}
+		if(!strcmp(argv[i],">>")) {
+			out=2; pos =i;
+		}
 		if(!strcmp(argv[i],"|")) command++; 
 
 	} // whether in,out exist, how many command in argv
@@ -148,7 +156,10 @@ void eval(char ** argv,char* cmdline,int bg){
 				front[i] = malloc(sizeof(char*)*50);
 			}
 			front = divide(argv,location,"|");
-			if ((pid = fork()) == 0) { // front command
+			pid = fork();
+			if(gpid == 0) gpid = pid;
+			setpgid(pid,gpid);
+			if (pid == 0) { // front command
 				printf("------first start\n");
 				for(int i=0; front[i] != NULL; i++){
 					printf("%s ",front[i]);
@@ -207,7 +218,42 @@ void eval(char ** argv,char* cmdline,int bg){
 
 		fflush(stdout);
 	} else {
-
+	int temp_fdin = dup(STDIN_FILENO);
+	int temp_fdout = dup(STDIN_FILENO);
+	if(pos>=0){ // redirection
+		int fd;
+		if(in == 1){		
+			if((fd = open(argv[pos+1], O_RDONLY)) == -1){
+				perror(argv[pos+1]);
+			} else {
+				dup2(fd,STDIN_FILENO);
+				close(fd);
+				argv[pos] ='\0';
+			}
+		} else if(out > 0){
+			if(out == 1){
+				if ((fd =open(argv[pos+1], O_RDWR | O_TRUNC | O_CREAT, 0644)) == -1){
+					perror(argv[pos+1]);
+				} else {
+					dup2(fd,STDOUT_FILENO);
+					close(fd);
+					argv[pos] ='\0';					
+				}
+			} else if(out==2){ // out == 2
+				if ((fd =open(argv[pos+1], O_RDWR | O_APPEND | O_CREAT, 0644)) == -1){
+					perror(argv[pos+1]);
+				} else {
+					dup2(fd,STDOUT_FILENO);
+					close(fd);
+					argv[pos] ='\0';					
+				}
+			} else { // error
+				fprintf(stderr,"%d %s: wrong out value.\n", out,argv[pos]);
+			}
+		} else {
+			fprintf(stderr,"%d %s: no redirection but wrong enter.\n", pos,argv[pos]);
+		}
+	}
 
    int check = builtin_command(argv);
    //printf("execute %s \n",argv[0]);
@@ -236,6 +282,12 @@ void eval(char ** argv,char* cmdline,int bg){
    	}
    	//printf("end here\n");
 	fflush(stdout);
+	if(pos != -1){ // restore redirection
+		dup2(temp_fdout,STDIN_FILENO);
+		dup2(temp_fdout,STDOUT_FILENO);
+	}
+	close(temp_fdin);
+	close(temp_fdout);
 	}
     return;
 }
@@ -280,6 +332,7 @@ int builtin_command(char **argv) {
 /* parseline - Parse the command line and build the argv array */
 int parseline(char *buf, char **argv) 
 {
+	gpid=0;
     char *delim;         /* Points to first space delimiter */
     int argc;            /* Number of args */
     int bg;              /* Background job? */

@@ -27,7 +27,7 @@
 
 
 void shellstart(){
-	int in=0;
+	//int in=0;
 	while (1) {
 		char cmdline[MAXLINE]; /* Command line */
 		char* ret;
@@ -42,9 +42,10 @@ void shellstart(){
 		ret = fgets(cmdline, MAXLINE, stdin); 
 		if (feof(stdin) || ret == NULL)
 		    exit(0);
-		char *argv = malloc(sizeof(char*)*MAXARGS); /* Argument list execve() */
+		char **argv;
+		argv = (char**)malloc(sizeof(char*)*MAXARGS); /* Argument list execve() */
 		for(int i=0; i< MAXARGS; i++){
-			argv[i] = malloc(sizeof(char)*MAXARGS);
+			argv[i] = (char*)malloc(sizeof(char)*MAXARGS);
 		}
 		/* Evaluate */
    		char buf[MAXLINE];   /* Holds modified command line */
@@ -52,7 +53,7 @@ void shellstart(){
    		int bg = parseline(buf, argv); /* Should the job run in bg or fg? */
 		eval(argv,cmdline,bg);
 		fflush(stdout);
-		in =1;
+		//in =1;
 		free(argv);
 	}
 }
