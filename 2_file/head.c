@@ -86,7 +86,14 @@ int main(int argc, char** argv) {
 			free(str);
 			if(times>=num) break;
 		}
-	} /*
+	} else  {
+		if(argc <=2){
+			fprintf(stderr,"%s: Cannot read file.", argv[1]);
+		} else { // head- n 3 wrongfile
+			fprintf(stderr,"%s: Cannot read file.", argv[3]);
+		}
+		
+	}/*
 	else if(argc == 1) {
 		fprintf(stderr,"%s: Cannot read file.\n", argv[1]);
 	}
@@ -94,6 +101,7 @@ int main(int argc, char** argv) {
 	//char* buf = "\n";
 	//assert( write(1,buf,sizeof(char)) < 0);
 	free(s1);	
+	if(argc != 1 || argc != 3) write(1,"\n",sizeof(char));
 	//write(1,"\n",sizeof(char));
 }
 

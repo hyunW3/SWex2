@@ -71,7 +71,9 @@ int main(int argc,char** argv){
 	char* s1 = (char*)malloc(sizeof(char)*file_size);
 	int result = read(fd,s1,sizeof(char)*file_size);
 	int times=0;
-	int sp = file_size-1;
+	int sp = result;
+	//printf("last is%c",s1[sp]);
+	fflush(stdout);
 	while(1){
 		
 		for(; s1[sp] != '\n'; sp--);

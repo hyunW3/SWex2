@@ -3,7 +3,7 @@
 // SSE2033 : System Software Experiment 2 (Fall 2019)
 //
 // Skeleton Code for PA#3
-//
+// 2016310932 Bae HyunWoong
 // Oct 28, 2019.
 // CSI, Sungkyunkwan University
 //
@@ -344,17 +344,17 @@ int parseline(char *buf, char **argv)
     /* Build the argv list */
     argc = 0;
     while ((delim = strchr(buf, ' '))) {
-	argv[argc++] = buf;
-	*delim = '\0';
-	buf = delim + 1;
-	while (*buf && (*buf == ' ')) /* Ignore spaces */
+		argv[argc++] = buf;
+		*delim = '\0';
+		buf = delim + 1;
+		while (*buf && (*buf == ' ')) /* Ignore spaces */
 	       buf++;
     }
+    //char* lim;
     argv[argc] = NULL;
     
-    if (argc == 0)  /* Ignore blank line */
-	return 1;
-
+    if (argc == 0) return 1; /* Ignore blank line */
+    
     /* Should the job run in the background? */
     if ((bg = (*argv[argc-1] == '&')) != 0)
 	argv[--argc] = NULL;

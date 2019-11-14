@@ -1,0 +1,32 @@
+
+error list
+1. Errors not completed
+grep a 이후 ctrl+c 시 swsh> 두번 출력
+- rm folder : 오류 분류
+-head a.1 | tail -n 10 값 출력 ㄴㄴ
+tail < a.1 에서 엔터 출력더됨
+ls | head 는 되는데 ls | tail, ls | cat 해결 ㄴㄴ
+tail a.1 | grep 1 -> "in clude" 로 해야된다
+tail -n 3 a.1 | cd
+ls|sort
+
+
+2. 해결된 문제
+- ls | sort 이후 인풋 대기모드
+- ls | grep a 라고 하면 뒤에가 grea 로 변함 -> divide 함수 문제
+head a.1 | tail -n 10 로 하면 tail -n 까지만 파싱댐 - > divde 함수 고침
+divide 의 문제 앞쪽으로 시프트하는데 공간이 부족한 경우가 발생 -> 새로운  어레이 만들어서 해결
+cat a.1 | head 는 안댐 -> 됨
+tail -n 3 a.1 -> 출력 두줄 -> if(times>num) 으로 해결 본래 >=
+
+
+해야될 것
+1. 명령어 나누기
+rediection / pipe 확인 - 얼추된듯
+2. tail 함수 수정 , tail 파일없을때
+3. redirection - 거의 성공
+setgpid  - 설정
+reaping child process
+
+additional
+1. cd 할떄 swsh /a/b/c> 와 같이 directory 표현
