@@ -2,8 +2,8 @@
 //
 // SSE2033 : System Software Experiment 2 (Fall 2019)
 //
-// Skeleton Code for PA#3
-//
+// Code for PA#3
+// 2016310932 Bae HyunWoong
 // Oct 28, 2019.
 // CSI, Sungkyunkwan University
 //
@@ -24,7 +24,7 @@
 #include <signal.h>
 #include <sys/stat.h>
 
-
+int pwd;
 
 void shellstart(){
 	//int in=0;

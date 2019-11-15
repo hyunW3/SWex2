@@ -9,6 +9,7 @@
 #include <sys/wait.h>
 #include <signal.h>
 #include <sys/stat.h>
+#include <sys/mman.h>
 // tail
 // continous input .
 // ex) tail
@@ -20,26 +21,11 @@ int main(int argc,char** argv){
 	int fd;
 	int check = 0;
 	int pos =-1;
-	// i think this should be in shell code
-	/*
-	for(int i=0; i< argc; i++){
-		if(!strcmp(argv[i],"<")){
-			check =1; pos =i; break;
-		} 
-	}
-	if(check){ // find redirection
-		if(!strcmp(argv[1],"-n")){
-			num = atoi(argv[2]);
-		} 
-		stat(argv[pos+1],&file_info);
-		file_size = file_info.st_size;
-		fd = open(argv[pos+1], O_RDONLY);	
-			
-	}else */
+
 	if(argc <= 2){
 		if(argc == 1){ // tail
 			fd = dup(0);
-			file_size = MAXARGS*num;
+			//file_size = MAXARGS*num;
 			//printf("stdin\n");	
 			fflush(stdout);
 		} else { // tail a.1
@@ -54,7 +40,7 @@ int main(int argc,char** argv){
 			if(argc == 3){
 				fd = dup(0);
 				//printf("2stdin\n");
-				file_size = MAXARGS*num;
+				//file_size = MAXARGS*num;
 			} else if(argc == 4){
 				stat(argv[3],&file_info);
 				file_size = file_info.st_size;	
@@ -66,6 +52,7 @@ int main(int argc,char** argv){
 		} else fprintf(stderr,"%s: wrong option\n", argv[1]);
 		
 	}
+	// lseek is better
 	//printf("%d\n",file_size);
 	//int result = read(fd,s1,sizeof(char)*file_size);
 	char* s1 = (char*)malloc(sizeof(char)*file_size);
