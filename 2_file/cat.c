@@ -29,7 +29,7 @@ int main(int argc, char** argv){
 		int trash = write(1,s1,sizeof(char)*(result));
 		trash++;
 	} else {
-		fprintf(stderr,"%d %s: Cannot read file.\n", fd,argv[1]);
+		fprintf(stderr,"%s: Cannot read file.\n",argv[1]);
 	}
 	//char* buf = "\n";
 	//assert( write(1,buf,sizeof(char)) < 0);

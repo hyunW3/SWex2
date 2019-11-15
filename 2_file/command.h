@@ -23,7 +23,29 @@
 #include <sys/wait.h>
 #include <signal.h>
 #include <sys/stat.h>
+#include <errno.h>
 
+void error(int error){
+	switch(error){
+		case 13 :
+			fprintf(stderr,"Permisson denied\n");
+			break;
+		case 21 :
+			fprintf(stderr,"Is a Directory\n");
+			break;
+		case 2:
+			fprintf(stderr,"No such file or Directory\n");
+			break;
+		case 20:
+			fprintf(stderr,"Not a Directory\n");
+			break;
+		case 1 :
+			fprintf(stderr,"Permission denied\n");
+			break;	
+		default:
+			fprintf(stderr,"Error occurred <%d>\n",error);					
+	}
+}
 //type3
 void cd_command(char** argv){
 	int result = chdir(argv[1]);
@@ -32,7 +54,7 @@ void cd_command(char** argv){
 		printf("move to %s\n",argv[1]);
 	} else if(result == -1){
 		//failed
-		fprintf(stderr,"%s: Directory not found.\n", argv[1]);
+		error(errno);
 	}
 }
 void rm_command(char** argv){
@@ -43,18 +65,18 @@ void rm_command(char** argv){
 		printf("rm %s\n",argv[1]);
 	} else if(result == -1){
 		//failed
-		fprintf(stderr,"rm %s failed maybe file doesn't exist\n", argv[1]);
+		error(errno);
 	}	
 }
 void mv_command(char** argv){
-	if(argv[2] == NULL) fprintf(stderr,"there's no newfile name\n");
+	//if(argv[2] == NULL || argv[1] == NULL) fprintf(stderr,"there's no newfile name\n");
 	int result = rename(argv[1],argv[2]);
 	if(result == 0){
 		// complete
 		printf("mv %s to %s\n",argv[1],argv[2]);
 	} else if(result == -1){
 		//failed
-		fprintf(stderr,"mv %s to %s failed\n", argv[1],argv[2]);
+		error(errno);
 	}	
 }
 //type4

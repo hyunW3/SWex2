@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
 	if(argc <= 2){ 
 		if(argc == 1){ // ls | head 
 			fd = dup(0);
-			file_size = MAXARGS;
+			file_size = MAXARGS*num;
 			//printf("stdin\n");
 			fflush(stdout);
 		} else {
@@ -52,7 +52,7 @@ int main(int argc, char** argv) {
 			if(argc == 3){
 				fd = dup(0);
 			//	printf("2stdin\n");
-				file_size = MAXARGS;
+				file_size = MAXARGS*num;
 			} else if(argc == 4){
 				stat(argv[3],&file_info);
 				file_size = file_info.st_size;	

@@ -25,7 +25,7 @@ int main(int argc,char** argv){
 	if(argc <= 2){
 		if(argc == 1){ // tail
 			fd = dup(0);
-			//file_size = MAXARGS*num;
+			file_size = MAXARGS*num;
 			//printf("stdin\n");	
 			fflush(stdout);
 		} else { // tail a.1
@@ -40,7 +40,7 @@ int main(int argc,char** argv){
 			if(argc == 3){
 				fd = dup(0);
 				//printf("2stdin\n");
-				//file_size = MAXARGS*num;
+				file_size = MAXARGS*num;
 			} else if(argc == 4){
 				stat(argv[3],&file_info);
 				file_size = file_info.st_size;	
@@ -57,25 +57,37 @@ int main(int argc,char** argv){
 	//int result = read(fd,s1,sizeof(char)*file_size);
 	char* s1 = (char*)malloc(sizeof(char)*file_size);
 	int result = read(fd,s1,sizeof(char)*file_size);
-	int times=0;
-	int sp = result;
-	//printf("last is%c",s1[sp]);
+	//printf("file_size is:%d\n",result);
+	//printf("in file,\n%s\n",s1);
 	fflush(stdout);
-	while(1){
+	int times=0;
+	int sp = result-1;
+	//printf("start\n");
+	while(sp>=0){
 		
-		for(; s1[sp] != '\n'; sp--);
+		for(; s1[sp] != '\n'; sp--) {
+			if(sp<0) break;
+		}
 		if(s1[sp] == '\n') {
+			//printf("\n");
 			times++; 
 			if(times >num) break;
 			else sp--;
 		}
 	}
 	char * p = s1+sp+1;
-	*(s1+file_size-1) = '\0';
+	*(s1+result-1) = '\0';
 	//printf("p is:%s\n",p);
-	write(1,p,file_size-sp);
+	//printf("fd is:%d\n",fd);
+	fflush(stdout);
+	if(fd != 0){
+		write(1,p,file_size-sp);
+	} else {
+		write(1,p,file_size-sp-1);
+	}
+	
 	//write(1,s1+sp,end-sp+1);
 	free(s1);
-	if(argc != 1 || argc != 3) write(1,"\n",sizeof(char));
+	if(argc != 1 && argc != 3 ) write(1,"\n",sizeof(char));
 	//
 }	
