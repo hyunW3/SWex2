@@ -7,6 +7,7 @@ grep a 이후 ctrl+c 시 swsh> 두번 출력
 head a.1 | tail
 
 
+
 tail -n 3 a.1 | cd
 ls|sort
 cd error
@@ -16,7 +17,10 @@ cd error
 
 1. error 분리했는데 확인
 2. tail 함수 수정 , tail 파일없을때 -stdin realloc
-3. reaping child process -> 해놓긴함
+3. reaping child process -> cat ../EMMA.word 
+ps -aux 로 체크
+mv rm 여러개
+cp 여러개 / 
 
 additional
 ls|sort

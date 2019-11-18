@@ -28,15 +28,21 @@
 void eval(char ** argv,char* cmdline,int bg);
 int parseline(char *buf, char **argv);
 int builtin_command(char **argv); 
-void al (int sig) {
-	// reaping child process
-
-	printf("\nswsh> ");
-	fflush(stdout);
-
-}
 int gpid;
 char pwd[1024];
+void al (int sig) {
+	if(gpid != 0){
+		kill(-1*gpid ,SIGKILL);
+	}
+	char cwd[1024];
+	char* result = getcwd(cwd,sizeof(cwd));	
+	if(result != NULL){
+		printf("\n%s$swsh> ",cwd);
+	} else {
+		printf("\n$swsh> ");
+	}
+	fflush(stdout);
+}
 
 void shellstart(){
 	//int in=0;
@@ -67,11 +73,13 @@ void shellstart(){
 			argv[i] = (char*)malloc(sizeof(char)*MAXARGS);
 		}
 		/* Evaluate */
+		gpid=0;
    		char buf[MAXLINE];   /* Holds modified command line */
    		strcpy(buf, cmdline);
    		int bg = parseline(buf, argv); /* Should the job run in bg or fg? */
 		eval(argv,cmdline,bg);
 		fflush(stdout);
+		gpid=0;
 		//in =1;
 		free(argv);
 	}
@@ -93,10 +101,20 @@ int main()
 void branch(int check, char** argv,int bg){
 	pid_t pid;
 		if(check == 1){
-			if((pid=fork()) ==0){
+			pid=fork();
+			int status;
+			if(gpid == 0) {
+				gpid = pid;
+				printf("set gpid:%d\n",gpid);
+			}
+			setpgid(pid,gpid);			
+			if(pid ==0){
 				execvp(argv[0],argv);
 			}
-			wait(NULL);
+			waitpid(-1, &status, WNOHANG | WUNTRACED);
+			if(WIFSTOPPED(status)){
+				kill(-1*gpid ,SIGKILL);
+			}
 		}else if(check == 3){
    			//printf("type3 begin\n",argv);
    			if(!strcmp(argv[0],"cd")){
@@ -216,12 +234,13 @@ void eval(char ** argv,char* cmdline,int bg){
 			} else {
 				int status;
 				char** back = malloc(sizeof(char*)*(100));
-	  			if (waitpid(pid, &status, WUNTRACED) < 0){
+	  			if (waitpid(-1, &status, WUNTRACED) < 0){
 					printf("waitfg: waitpid error");
 	  			}else{
 	  				// reaping child process
+	  				//kill(status,SIGKILL);
 	  				if(WIFSTOPPED(status)){
-	  					kill(0,SIGKILL);
+	  					kill(-1*gpid,SIGKILL);
 	  				}
 	  				//printf("------back start\n");
 					for(int i=0; argv[i] != NULL; i++){
@@ -297,7 +316,10 @@ void eval(char ** argv,char* cmdline,int bg){
    //printf("argv[0]:%s\n",argv[0]);
    fflush(stdout);
    if (!check) { // no check : no builtin_command
-		if ((pid = fork()) == 0) {   /* Child runs user job */
+   		pid = fork();
+   		if(gpid == 0) gpid = pid;
+		setpgid(pid,gpid);
+		if (pid == 0) {   /* Child runs user job */
    			char * newAr = (char*)malloc(sizeof(char)*(strlen(pwd)+strlen(argv[0])));
    			char *p;
    			if( (p = strstr(argv[0],"./"))) {
@@ -381,7 +403,7 @@ int builtin_command(char **argv) {
 /* parseline - Parse the command line and build the argv array */
 int parseline(char *buf, char **argv) 
 {
-	gpid=0;
+	
     char *delim;         /* Points to first space delimiter */
     int argc;            /* Number of args */
     int bg;              /* Background job? */

@@ -70,14 +70,27 @@ void rm_command(char** argv){
 }
 void mv_command(char** argv){
 	//if(argv[2] == NULL || argv[1] == NULL) fprintf(stderr,"there's no newfile name\n");
-	int result = rename(argv[1],argv[2]);
-	if(result == 0){
-		// complete
-		printf("mv %s to %s\n",argv[1],argv[2]);
-	} else if(result == -1){
-		//failed
-		error(errno);
-	}	
+	if(argv[3]!= NULL){
+		int result = rename(argv[1],argv[2]);
+		if(result == 0){
+			// complete
+			printf("mv %s to %s\n",argv[1],argv[2]);
+		} else if(result == -1){
+			//failed
+			error(errno);
+		}			
+	} /*
+	else { // multiple input
+		char* dir = (char*)malloc(sizeof(char)*MAXLINE);
+		for(int i=0; argv[i]; i++){
+			if(argv[i+1]==NULL){
+				dir = argv[i];
+			}
+		}
+
+	}
+	*/
+
 }
 //type4
 void pwd_command(){
