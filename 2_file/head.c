@@ -11,82 +11,136 @@
 #include <sys/stat.h>
 //void head_command(char** argv)
 // just head & read 10 line doesn't success
-int main(int argc, char** argv) {
 	int num =10;
+void print_file(int argc, int fd, int file_size,int num);
+int main(int argc, char** argv) {
+	
 	struct stat file_info;
 	int file_size;
 	int fd;
 	int check = 0;
 	int pos =-1;
-
-	if(argc <= 2){ 
-		if(argc == 1){ // ls | head 
-			fd = dup(0);
-			file_size = MAXARGS*num;
-			//printf("stdin\n");
-			fflush(stdout);
-		} else {
-			stat(argv[1],&file_info);
-			file_size = file_info.st_size;
-			fd = open(argv[1], O_RDONLY);			
-		}
-	
-	} else{
+ 
+/*
+	if((argv[1] != NULL) && (!strcmp(argv[1],"-n"))){
 		if(!strcmp(argv[1],"-n")){
 			num = atoi(argv[2]);
 			if(argc == 3){
 				fd = dup(0);
-			//	printf("2stdin\n");
 				file_size = MAXARGS*num;
-			} else if(argc == 4){
-				stat(argv[3],&file_info);
-				file_size = file_info.st_size;	
-				fd = open(argv[3], O_RDONLY);				
+				print_file(argc,argv,fd,file_size,num);
+				
 			} else {
-				file_size = MAXLINE;
-			}
+				int i =3;
+				for(; argv[i] != NULL; i++){
+					fd = open(argv[i], O_RDONLY);
+					if(fd < 0){
+						perror("cannot open file\n");
+					}else {
+						stat(argv[i],&file_info);
+						file_size = file_info.st_size;	
+						print_file(argc,argv,fd,file_size,num);
+					}	
+
+				}		
+				printf("%d %s\n",i,argv[i]);	
+			} 
 		
 		} else fprintf(stderr,"%s: wrong option\n", argv[1]);
 		
-	}
+	}else { 
+		if(argc == 1){ // ls | head 
+			fd = dup(0);
+			file_size = MAXARGS*num;
+			print_file(argc,argv,fd,file_size,num);
+			
+		} else {
+			printf("argc: %d ",argc);
+			for(int i=1; argv[i] != NULL; i++){		
+				printf("i:%d\n",i);	
+				if(i != 1) 	write(1,"\n",1);	
+				printf("%d %s\n",i,argv[i]);
+				fd = open(argv[i], O_RDONLY);
+				if(fd < 0){
+					perror(argv[i]);
+				}else {			
+					stat(argv[i],&file_info);
+					file_size = file_info.st_size;	
+					print_file(argc,argv,fd,file_size,num);
+				}	
+				fflush(stdout);
+			}			
+		}
 	
-
-	char* s1 = (char*)malloc(sizeof(char)*file_size);
-	int result = read(fd,s1,sizeof(char)*file_size);
-	if(result != EOF){
-		int sp=0;
-		int times=0;
-		while((sp<result) ){
-			char* str = (char*)malloc(sizeof(char)*1024);
-			int i;
-			for(i=0; (s1[sp] != '\n'); i++,sp++){				
-				str[i] = s1[sp];
-			} 
-			if(times != (num-1)) str[i] = '\n'; // i = str len	
-			else { str[i] = '\0'; }
-			sp++;
-			//assert(write(1,str,sizeof(char)*i) <0);	
-			write(1,str,sizeof(char)*(i+1));
-			times++;	
-			free(str);
-			if(times>=num) break;
-		}
-	} else  {
-		if(argc <=2){
-			fprintf(stderr,"%s: Cannot read file.", argv[1]);
-		} else { // head- n 3 wrongfile
-			fprintf(stderr,"%s: Cannot read file.", argv[3]);
-		}
-		
-	}/*
-	else if(argc == 1) {
-		fprintf(stderr,"%s: Cannot read file.\n", argv[1]);
 	}
 	*/
-	//char* buf = "\n";
-	//assert( write(1,buf,sizeof(char)) < 0);
-	free(s1);	
-	if(argc != 1 || argc != 3) write(1,"\n",sizeof(char));
+	if((argv[1] != NULL) && (!strcmp(argv[1],"-n"))){ // option
+		num = atoi(argv[2]);
+		if(argv[3] == NULL){
+			fd =dup(0);
+			file_size = MAXARGS*num;
+			print_file(argc,fd,file_size,num);
+		} else {
+			int i=3;
+			for(; argv[i] != NULL; i++){ // to get multiple input			
+				stat(argv[i],&file_info);
+				file_size = file_info.st_size;
+				fd = open(argv[i], O_RDONLY);
+				if(fd<0){
+					perror(argv[i]);
+					
+				}else {
+					print_file(argc,fd,file_size,num);
+				}	
+			}
+		}
+	} else { // no option
+		if(argv[1] == NULL){
+			fd =dup(0);
+			file_size = MAXARGS*num;	
+			print_file(argc,fd,file_size,num);		
+		} else {
+			int i=1;
+			for(; argv[i] != NULL; i++){ // to get multiple input
+				fd = open(argv[i], O_RDONLY);
+				if(fd <0){
+					perror(argv[i]);
+				}else {
+					stat(argv[i],&file_info);
+					file_size = file_info.st_size;
+					print_file(argc,fd,file_size,num);
+					
+				}	
+			}			
+		}
+	}
+
+
+
+
 	//write(1,"\n",sizeof(char));
 }
 
+void print_file(int argc, int fd, int file_size,int num){
+	char** s1 = (char**)malloc(sizeof(char*)*num);
+	for(int i=0; i<num; i++){
+		s1[i] = (char*)malloc(sizeof(char)*1024);
+	}
+	int i=0,j=0;
+	char buf[2];
+	//printf("fd:%d,num:%d\n",fd,num);
+	while(read(fd,buf,1) != EOF ){
+		s1[i][j++] = buf[0];
+		//printf("%d %d\n",i,j);
+		if(buf[0] == '\n'){
+			s1[i][j] = '\0';
+			j=0;
+			write(1,s1[i],strlen(s1[i]));
+			if(i>=num) break;
+			else {
+				 i++;
+			}
+		}
+	}
+
+}

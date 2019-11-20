@@ -11,6 +11,8 @@ cd < k (k is file of /home)
 2. tail 함수 수정 , tail 파일없을때 -stdin realloc
  
 
+head multi 안됨
+head a.1 ../a.12
 
 ./a.out | cat | tail
 
@@ -27,7 +29,8 @@ rediection / pipe 확인 - 얼추된듯
 setgpid  - 설정
 1. cd 할떄 swsh /a/b/c> 와 같이 directory 표현
 3. reaping child process -> cat ../EMMA.word -ps -axj 로 체크- pgid
-rm 여러개
+rm  cat tail 여러개
+tail a.1 안됨
 cd error
 		해결된 문제
 - ls | sort 이후 인풋 대기모드
@@ -46,3 +49,5 @@ grep a 이후 ctrl+c 시 swsh> 두번 출력
 cat a.1 | grep "1"
 tail a.1 | grep 1 -> "in clude" 로 해야된다 -> parseline 수정
 tail -n 3 a.1 | cd -> cd 의 인자가 없어서 그랬음 tail -n 3 a.1 | cd db
+ls | tail
+pwd | cat | cat - 됨

@@ -14,80 +14,83 @@
 // continous input .
 // ex) tail
 // a b c -> a,b,c
+void print_file(int argc, int fd, int file_size,int num);
 int main(int argc,char** argv){
 	int num =10;
 	struct stat file_info;
 	int file_size;
 	int fd;
-	int check = 0;
-	int pos =-1;
-
-	if(argc <= 2){
-		if(argc == 1){ // tail
-			fd = dup(0);
+	if((argv[1] != NULL) && (!strcmp(argv[1],"-n"))){ // option
+		num = atoi(argv[2]);
+		if(argv[3] == NULL){
+			fd =dup(0);
 			file_size = MAXARGS*num;
-			//printf("stdin\n");	
-			fflush(stdout);
-		} else { // tail a.1
-			stat(argv[1],&file_info);
-			file_size = file_info.st_size;
-			fd = open(argv[1], O_RDONLY);			
-		}
-	
-	} else{
-		if(!strcmp(argv[1],"-n")){
-			num = atoi(argv[2]);
-			if(argc == 3){
-				fd = dup(0);
-				//printf("2stdin\n");
-				file_size = MAXARGS*num;
-			} else if(argc == 4){
-				stat(argv[3],&file_info);
-				file_size = file_info.st_size;	
-				fd = open(argv[3], O_RDONLY);				
-			} else {
-				file_size = MAXLINE;
+			print_file(argc,fd,file_size,num);
+		} else {
+			int i=3;
+			for(; argv[i] != NULL; i++){ // to get multiple input			
+				stat(argv[i],&file_info);
+				file_size = file_info.st_size;
+				fd = open(argv[i], O_RDONLY);
+				if(fd<0){
+					perror(argv[i]);
+					
+				}else {
+					print_file(argc,fd,file_size,num);
+				}	
 			}
-		
-		} else fprintf(stderr,"%s: wrong option\n", argv[1]);
-		
-	}
-	// lseek is better
-	//printf("%d\n",file_size);
-	//int result = read(fd,s1,sizeof(char)*file_size);
-	char* s1 = (char*)malloc(sizeof(char)*file_size);
-	int result = read(fd,s1,sizeof(char)*file_size);
-	//printf("file_size is:%d\n",result);
-	//printf("in file,\n%s\n",s1);
-	fflush(stdout);
-	int times=0;
-	int sp = result-1;
-	//printf("start\n");
-	while(sp>=0){
-		
-		for(; s1[sp] != '\n'; sp--) {
-			if(sp<0) break;
 		}
-		if(s1[sp] == '\n') {
-			//printf("\n");
-			times++; 
-			if(times >num) break;
-			else sp--;
+	} else { // no option
+		if(argv[1] == NULL){
+			fd =dup(0);
+			file_size = MAXARGS*num;	
+			print_file(argc,fd,file_size,num);		
+		} else {
+			int i=1;
+			for(; argv[i] != NULL; i++){ // to get multiple input
+				fd = open(argv[i], O_RDONLY);
+				if(fd <0){
+					perror(argv[i]);
+				}else {
+					stat(argv[i],&file_info);
+					file_size = file_info.st_size;
+					print_file(argc,fd,file_size,num);
+					
+				}	
+			}			
 		}
 	}
-	char * p = s1+sp+1;
-	*(s1+result-1) = '\0';
-	//printf("p is:%s\n",p);
-	//printf("fd is:%d\n",fd);
-	fflush(stdout);
-	if(fd != 0){
-		write(1,p,file_size-sp);
-	} else {
-		write(1,p,file_size-sp-1);
-	}
-	
-	//write(1,s1+sp,end-sp+1);
-	free(s1);
-	if(argc != 1 && argc != 3 ) write(1,"\n",sizeof(char));
-	//
+
 }	
+
+void print_file(int argc, int fd, int file_size,int num){
+
+	char** s1 = (char**)malloc(sizeof(char*)*num);
+	for(int i=0; i<num; i++){
+		s1[i] = (char*)malloc(sizeof(char)*1024);
+	}
+	int line=0;
+	int i=0,j=0;
+	char buf[2];
+	while(read(fd,buf,1) >0 ){
+		s1[i][j++] = buf[0];
+		if(buf[0] == '\n'){
+			s1[i][j] ='\0';
+			//printf("%s\n",s1[i]);
+			line++;
+			i++;
+			if(i >=num){
+				i -= num;
+			}
+			j=0;
+		}
+	}
+	j=0;
+	while(j<num){
+		if(i<0) i = num-1;
+		if(i >=num) i -= num;
+		if(s1[i] != NULL)	write(1,s1[i],strlen(s1[i]));
+		i++; j++;
+	}
+}
+	

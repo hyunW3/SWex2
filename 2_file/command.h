@@ -65,7 +65,6 @@ void rm_command(char** argv){
     		error(argv[0],errno,argv[1]);
     	}
     }
-
 }
 void mv_command(char** argv){
 	//if(argv[2] == NULL || argv[1] == NULL) fprintf(stderr,"there's no newfile name\n");
