@@ -18,22 +18,7 @@ int main(int argc, char** argv) {
 	int fd;
 	int check = 0;
 	int pos =-1;
-	// i think this should be in shell code
-	/*
-	for(int i=0; i< argc; i++){
-		if(!strcmp(argv[i],"<")){
-			check =1; pos =i; break;
-		} 
-	}
-	if(check){ // find redirection
-		if(!strcmp(argv[1],"-n")){
-			num = atoi(argv[2]);
-		} 
-		stat(argv[pos+1],&file_info);
-		file_size = file_info.st_size;
-		fd = open(argv[pos+1], O_RDONLY);	
-			
-	}else */
+
 	if(argc <= 2){ 
 		if(argc == 1){ // ls | head 
 			fd = dup(0);

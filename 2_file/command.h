@@ -25,25 +25,25 @@
 #include <sys/stat.h>
 #include <errno.h>
 
-void error(int error){
+void error(char* cmd,int error,char* argv){
 	switch(error){
 		case 13 :
-			fprintf(stderr,"Permisson denied\n");
+			fprintf(stderr,"%s: %s: Permisson denied\n",cmd,argv);
 			break;
 		case 21 :
-			fprintf(stderr,"Is a Directory\n");
+			fprintf(stderr,"%s: %s: Is a Directory\n",cmd,argv);
 			break;
 		case 2:
-			fprintf(stderr,"No such file or Directory\n");
+			fprintf(stderr,"%s: %s: No such file or Directory\n",cmd,argv);
 			break;
 		case 20:
-			fprintf(stderr,"Not a Directory\n");
+			fprintf(stderr,"%s: %s: Not a Directory\n",cmd,argv);
 			break;
 		case 1 :
-			fprintf(stderr,"Permission denied\n");
+			fprintf(stderr,"%s: %s: Permission denied\n",cmd,argv);
 			break;	
 		default:
-			fprintf(stderr,"Error occurred <%d>\n",error);					
+			fprintf(stderr,"%s: %s: Error occurred <%d>\n",cmd,argv,error);					
 	}
 }
 //type3
@@ -51,33 +51,40 @@ void cd_command(char** argv){
 	int result = chdir(argv[1]);
 	if(result == 0){
 		// complete
-		printf("move to %s\n",argv[1]);
+		//printf("move to %s\n",argv[1]);
 	} else if(result == -1){
 		//failed
-		error(errno);
+		error(argv[0],errno,argv[1]);
 	}
 }
 void rm_command(char** argv){
 	//unlink
-	int result = unlink(argv[1]);
-	if(result == 0){
-		// complete
-		printf("rm %s\n",argv[1]);
-	} else if(result == -1){
-		//failed
-		error(errno);
-	}	
+	int result;
+    for (int i = 1; argv[i] != NULL; i++){
+    	if ((result = unlink(argv[i])) < 0){
+    		error(argv[0],errno,argv[1]);
+    	}
+    }
+
 }
 void mv_command(char** argv){
 	//if(argv[2] == NULL || argv[1] == NULL) fprintf(stderr,"there's no newfile name\n");
-	int result = rename(argv[1],argv[2]);
-	if(result == 0){
-		// complete
-		printf("mv %s to %s\n",argv[1],argv[2]);
-	} else if(result == -1){
-		//failed
-		error(errno);
-	}	
+	if(argv[3] == NULL){
+		int result = rename(argv[1],argv[2]);
+		if(result == 0){
+			// complete
+			printf("mv %s to %s\n",argv[1],argv[2]);
+		} else if(result == -1){
+			//failed
+			error(argv[0],errno,argv[1]);
+		}			
+	} else {
+		int last;
+		int i=0;
+		for(; argv[i]!=NULL; i++);
+
+	}
+
 }
 //type4
 void pwd_command(){
