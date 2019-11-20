@@ -1,3 +1,4 @@
+// 2016310932 Bae HyunWoong
 #define MAXARGS   128
 #define MAXLINE	  256
 #include <stdio.h>
@@ -9,8 +10,6 @@
 #include <sys/wait.h>
 #include <signal.h>
 #include <sys/stat.h>
-//void head_command(char** argv)
-// just head & read 10 line doesn't success
 	int num =10;
 void print_file(int argc, int fd, int file_size,int num);
 int main(int argc, char** argv) {
@@ -30,9 +29,8 @@ int main(int argc, char** argv) {
 			stat(argv[3],&file_info);
 			file_size = file_info.st_size;
 			fd = open(argv[3], O_RDONLY);
-			if(fd<0){
+			if(fd< 0){
 				perror(argv[3]);
-					
 			}else {
 				print_file(argc,fd,file_size,num);
 			}	
@@ -63,10 +61,8 @@ void print_file(int argc, int fd, int file_size,int num){
 	}
 	int i=0,j=0;
 	char buf[2];
-	//printf("fd:%d,num:%d\n",fd,num);
 	while(read(fd,buf,1) != EOF ){
 		s1[i][j++] = buf[0];
-		//printf("%d %d\n",i,j);
 		if(buf[0] == '\n'){
 			s1[i][j] = '\0';
 			j=0;

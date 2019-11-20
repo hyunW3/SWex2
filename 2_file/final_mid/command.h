@@ -1,3 +1,4 @@
+// 2016310932 Bae HyunWoong
 //-----------------------------------------------------------
 //
 // SSE2033 : System Software Experiment 2 (Fall 2019)
@@ -51,7 +52,6 @@ void cd_command(char** argv){
 	int result = chdir(argv[1]);
 	if(result == 0){
 		// complete
-		//printf("move to %s\n",argv[1]);
 	} else if(result == -1){
 		//failed
 		error(argv[0],errno,argv[1]);
@@ -67,7 +67,6 @@ void rm_command(char** argv){
     }
 }
 void mv_command(char** argv){
-	//if(argv[2] == NULL || argv[1] == NULL) fprintf(stderr,"there's no newfile name\n");
 	if(argv[3] == NULL){
 		int result = rename(argv[1],argv[2]);
 		if(result == 0){

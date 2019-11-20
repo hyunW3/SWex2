@@ -4,23 +4,26 @@ error list
 
 cd < k (k is file of /home)
 ./wordcount 128 < ../EMMA.word | cat
+ls | tail
 
 해야될 것
 
 1. error 분리했는데 확인
 2. tail 함수 수정 , tail 파일없을때 -stdin realloc
  
+tail -n 3../a.1
 
-head multi 안됨
-head a.1 ../a.12
 
 ./a.out | cat | tail
 
 ../
+
 additional
 mv  여러개
 cp 여러개 / 
 ls|sort
+head multi 안됨
+head a.1 ../a.12 -> 포기
 
 함
 1. 명령어 나누기
@@ -30,7 +33,7 @@ setgpid  - 설정
 1. cd 할떄 swsh /a/b/c> 와 같이 directory 표현
 3. reaping child process -> cat ../EMMA.word -ps -axj 로 체크- pgid
 rm  cat tail 여러개
-tail a.1 안됨
+
 cd error
 		해결된 문제
 - ls | sort 이후 인풋 대기모드

@@ -32,22 +32,17 @@ int builtin_command(char **argv);
 void (*sigstop)(int);
 int gpid;
 char pwd[1024];
-int recur=0;
 void al (int sig) {
 	// reaping child process
-	//printf("gpid:%d\n",gpid);
 	if(gpid != 0){
-		kill(gpid,SIGKILL);
 		kill(-1*gpid,SIGKILL);
 	}
-	//write(1,"\n",sizeof(char));
 	fflush(stdout);
 
 }
 void CHLD_al (int sig) {
 	// reaping child process
 	int status;
-	//printf("gpid:%d\n",gpid);
 	while(waitpid(-1,&status, WNOHANG | WUNTRACED) != -1){
 		if(WIFSTOPPED(status)){
 			if(kill(-1*status,SIGKILL) <0){
@@ -55,10 +50,7 @@ void CHLD_al (int sig) {
 			}
 		}
 	}
-	
-	if(gpid != 0){
-		kill(-1*gpid,SIGKILL);
-	}
+
 	fflush(stdout);
 
 }
@@ -67,18 +59,11 @@ void shellstart(){
 	while (1) {
 		char cmdline[MAXLINE]; /* Command line */
 		char* ret;
-		
-		/*
-		if(in == 0){
-			printf("swsh> "); 
-		} else {
-			printf("\nswsh> ");
-		}
-		*/
+
 		char cwd[1024];
 		char* result = getcwd(cwd,sizeof(cwd));	
 		if(result != NULL){
-			printf("%s$swsh> ",cwd);
+			printf("%s$swsh> ",cwd+1);
 		} else {
 			printf("$swsh> ");
 		}
@@ -105,12 +90,9 @@ int main()
 {
 
 	signal(SIGINT,al);
-	//sigstop = signal(20,al); // ctrl+z sigstop(20)
 	signal(20,al);
 	signal(SIGCHLD,CHLD_al);
-	getcwd(pwd,sizeof(pwd));	
-	//write(1,pwd,strlen(pwd));
-	//write(1,"\n",sizeof(char));
+	getcwd(pwd,sizeof(pwd));
 	/* Read */
     shellstart();
    return 0;
@@ -120,16 +102,23 @@ int main()
 void branch(int check, char** argv,int bg){
 	pid_t pid;
 		if(check == 1){
-			pid=fork();
-			if(gpid == 0) gpid = getpid();
-			setpgid(getpid(),gpid);
-			printf("branch,pid:%d gpid:%d(%d)\n",pid,gpid,getpgid(pid));
-			if(pid ==0){
-				execvp(argv[0],argv);
+			if(strcmp(argv[0],"man")){ // not man
+				pid=fork();
+				if(gpid == 0) gpid = pid;
+				if(pid==0) gpid = getpgid(getpid());
+				if(pid ==0){
+					execvp(argv[0],argv);
+				}
+				setpgid(pid,gpid);
+				wait(NULL);
+			} else {
+				if((pid=fork() == 0)){
+					execvp(argv[0],argv);
+				}
+				wait(NULL);
 			}
-			wait(NULL);
+	
 		}else if(check == 3){
-   			//printf("type3 begin\n",argv);
    			if(!strcmp(argv[0],"cd")){
    				cd_command(argv); // branch3
    			} else if(!strcmp(argv[0],"mv")){
@@ -158,17 +147,13 @@ void branch(int check, char** argv,int bg){
 /* $end shellmain */
 char** divide(char** argv,int location,char* a){
 	int i;
-	//printf("-------divide func-------\n");
-	//printf("location:%d\n",location);
 	if(location <0){
 		return NULL;
 	} else {
 		char** front = malloc(sizeof(char*)*(location+1));
-	//	printf("front:\n");
 		for(i=0; i < location; i++){
 			front[i] = malloc(sizeof(char*)*50);
 			strcpy(front[i],argv[i]);
-	//		printf("%s ",argv[i]);
 		}
 		front[location] ='\0';
 		return front;
@@ -183,47 +168,48 @@ void eval(char ** argv,char* cmdline,int bg){
     if (argv[0] == NULL) return;   /* Ignore empty lines */
     int in =0;
 	int out =0; 
-	int pos =-1;
+	int pos_in =-1;
+	int pos_out =-1;
 	int command=1;
     for(int i=0; argv[i] != NULL; i++){
 		if(!strcmp(argv[i],"<")) {
-			in=1; pos =i;
+			in=1; pos_in =i;
 		}
 		if(!strcmp(argv[i],">")) {
-			out=1; pos = i;
+			out=1; pos_out = i;
 		}
 		if(!strcmp(argv[i],">>")) {
-			out=2; pos =i;
+			out=2; pos_out =i;
 		}
 		if(!strcmp(argv[i],"|")) command++; 
 
 	} // whether in,out exist, how many command in argv
 	if(command > 1){
-		recur=1;
 		int location=-1;
 		for(int i=1; argv[i] != NULL; i++){
 			if(!strcmp(argv[i],"|")) {
 				location = i; break;
 			}
 		}
-		//printf("location:%d\n",location);
 		int fd[2];
 		if(pipe(fd) <0){
 			perror("pipe error!");
 			exit(-1);
-		
-	}else {
+		}else {
 			char** front = malloc(sizeof(char*)*(100));
 			for(int i=0; argv[i] != NULL; i++){
 				front[i] = malloc(sizeof(char*)*50);
 			}
 			front = divide(argv,location,"|");
 			pid = fork();
-			if(gpid == 0) gpid = pid;
-			setpgid(getpid(),gpid);
-   		printf("pipe:%s pid:%d gpid:%d(%d)\n",argv[0],pid,gpid,getpgid(pid));
-			if (pid == 0) { // front command
 
+			if(gpid == 0) gpid = pid;
+			setpgid(pid,gpid);
+   		
+   		fflush(stdout);
+			if (pid == 0) { // front command
+				gpid = getpgid(getpid());
+				setpgid(pid,gpid);
 				close(fd[0]);
 				dup2(fd[1],1);
 				eval(front,cmdline,bg);
@@ -231,27 +217,24 @@ void eval(char ** argv,char* cmdline,int bg){
 				exit(0);					
 				
 			} else {
+				setpgid(pid,gpid);
 				int status;
 				char** back = malloc(sizeof(char*)*(100));
 	  			if (waitpid(pid, &status, WUNTRACED) < 0){
 					printf("waitfg: waitpid error");
-	  			} else {
+	  			}else{
 	  				// reaping child process
-/*	  				if(WIFSTOPPED(status)){
+	  				if(WIFSTOPPED(status)){
 	  					kill(-1*gpid,SIGKILL);
 	  				}
-*/	  				//printf("------back start\n");
 					for(int i=0; argv[i] != NULL; i++){
 						back[i] = malloc(sizeof(char*)*50);
 					}
 					
 					int i;
 					for(i=location+1; argv[i] != NULL; i++){
-						//printf("%s ",argv[i]);
 						strcpy(back[i-location-1],argv[i]);
-						//printf("%s ",back[i-location-1]);
-					}	//			printf("\n");
-					//fflush(stdout);
+					}	
 					back[i-location-1] = '\0';
 				}
 		// back command
@@ -263,109 +246,100 @@ void eval(char ** argv,char* cmdline,int bg){
 				eval(back,ptr,bg);
 				dup2(temp_fd,STDIN_FILENO); // restore	
 				free(back);				
-			//}
+
 			}
 
 		}
 
 		fflush(stdout);
 	} else {
-	int temp_fdin = dup(STDIN_FILENO);
-	int temp_fdout = dup(STDIN_FILENO);
-	if(pos>=0){ // redirection
+		int temp_fdin = dup(STDIN_FILENO);
+		int temp_fdout = dup(STDIN_FILENO);
+	if((pos_in+pos_out+1)>=0 ){ // redirection
 		int fd;
-		if(in == 1){		
-			if((fd = open(argv[pos+1], O_RDONLY)) == -1){
-				perror(argv[pos+1]);
+		if(in > 0){		
+			if((fd = open(argv[pos_in+1], O_RDONLY)) == -1){
+				perror(argv[pos_in+1]);
 			} else {
 				dup2(fd,STDIN_FILENO);
 				close(fd);
-				argv[pos] ='\0';
+				argv[pos_in] ='\0';
 			}
-		} else if(out > 0){
+		}
+		if(out > 0){
 			if(out == 1){
-				if ((fd =open(argv[pos+1], O_RDWR | O_TRUNC | O_CREAT, 0644)) == -1){
-					perror(argv[pos+1]);
+				if ((fd =open(argv[pos_out+1], O_RDWR | O_TRUNC | O_CREAT, 0644)) == -1){
+					perror(argv[pos_out+1]);
 				} else {
 					dup2(fd,STDOUT_FILENO);
 					close(fd);
-					argv[pos] ='\0';					
+					argv[pos_out] ='\0';					
 				}
 			} else if(out==2){ // out == 2
-				if ((fd =open(argv[pos+1], O_RDWR | O_APPEND | O_CREAT, 0644)) == -1){
-					perror(argv[pos+1]);
+				if ((fd =open(argv[pos_out+1], O_RDWR | O_APPEND | O_CREAT, 0644)) == -1){
+					perror(argv[pos_out+1]);
 				} else {
 					dup2(fd,STDOUT_FILENO);
 					close(fd);
-					argv[pos] ='\0';					
+					argv[pos_out] ='\0';					
 				}
 			} else { // error
-				fprintf(stderr,"%d %s: wrong out value.\n", out,argv[pos]);
+				fprintf(stderr,"wrong out data %d\n",out );
 			}
-		} else {
-			fprintf(stderr,"%d %s: no redirection but wrong enter.\n", pos,argv[pos]);
-		}
+		} 
 	}
 
-   int check = builtin_command(argv);
-   //printf("execute %s \n",argv[0]);
-   //printf("argv[0]:%s\n",argv[0]);
-   fflush(stdout);
-   if (!check) { // no check : no builtin_command
-   	char * newAr = (char*)malloc(sizeof(char)*(strlen(pwd)+strlen(argv[0])));
-   	char *p;
-   	if( (p = strstr(argv[0],"./"))) {
-   		strcpy(newAr,pwd);
-   		strcat(newAr,p+1);
-   	} else {
-   		strcpy(newAr,pwd);
-		strcat(newAr,"/");
-   		strcat(newAr,argv[0]);
-   	}
-   	argv[0] = newAr;
-   	fflush(stdout);
-   	if(recur==0){
-   		pid = fork();
+	int check = builtin_command(argv);
+   if (!check || check == 2) { // not builtin_command
+   			pid = fork();
    		if(gpid == 0) gpid = pid;
    		setpgid(pid,gpid);
-   		printf("eval:%s pid:%d gpid:%d(%d)\n",argv[0],pid,gpid,getpgid(pid));
 		if ( pid== 0 ) {   /* Child runs user job */
-   			if (execv(argv[0], argv) < 0) { // execute the file on folder
-				fprintf(stderr,"%s: Command not found.\n", argv[0]);
-				exit(0);
-	 	   	} 
-	 	   	//printf("pid:%d gpid:%d(%d)\n",pid,gpid,getpgid(pid));
-	 	   	fflush(stdout);
-	 	   free(newAr);
+   			setpgid(pid,gpid);
+   			if(check == 2){ // remember 
+    			char * newAr = (char*)malloc(sizeof(char)*(strlen(pwd)+strlen(argv[0])));
+   				char *p;
+   				if( (p = strstr(argv[0],"./"))) {
+   					strcpy(newAr,pwd);
+   					strcat(newAr,p+1);
+   				} else {
+   					strcpy(newAr,pwd);
+   					strcat(newAr,"/");
+   					strcat(newAr,argv[0]);
+   				}
+   				argv[0] = newAr;
+   				fflush(stdout);
+   			
+   				if (execv(argv[0], argv) < 0) { // execute the file on folder
+					fprintf(stderr,"%s: Command not found.\n", argv[0]);
+					exit(0);
+	 	   		} 
+	 	   		free(newAr);  				
+   			} else {
+   				if (execv(argv[0], argv) < 0) { // execute the file on folder
+					fprintf(stderr,"%s: Command not found.\n", argv[0]);
+					exit(0);
+	 	   		} 
+
+   			}
+
 		}
+		setpgid(pid,gpid);
 		int status;
-	 	//waitpid(-1,&status,WNOHANG | WUNTRACED);
-	  	if(WIFSTOPPED(status)){
-	  		kill(-1*gpid,SIGKILL);
-	  	}
 		/* Parent waits for foreground job to terminate */
 		if (!bg) {
 	  	  if (waitpid(pid, &status, WUNTRACED) < 0){
 				printf("waitfg: waitpid error");
 	  	  }
 
-		}else{
-	 	   printf("%d %s", pid, cmdline);
 		}
-	} else { // is recur
-		if (execv(argv[0], argv) < 0) { // execute the file on folder
-			fprintf(stderr,"%s: Command not found.\n", argv[0]);
-			exit(0);
-	 	} 
-	 	fflush(stdout);
-	 	free(newAr);
-	 }
+		else
+	 	   printf("%d %s", pid, cmdline);
    	} else { // is builtin command
    		branch(check,argv,bg); 
    	}
-   	//printf("end here\n");
 	fflush(stdout);
-	if(pos != -1){ // restore redirection
+	if((pos_in+pos_out+1) != -1){ // restore redirection
 		dup2(temp_fdout,STDIN_FILENO);
 		dup2(temp_fdout,STDOUT_FILENO);
 	}
@@ -382,7 +356,6 @@ int builtin_command(char **argv) {
 	char* type2[4] = {"head","tail","cat","cp"};
 	char* type3[3] = {"mv","rm","cd"};
 	char* type4[2] = {"pwd","exit"};
-	//printf("argv[0] is %s\n",argv[0]);
     if (!strcmp(argv[0], "quit")) exit(0);  /* quit command */
 	
     if (!strcmp(argv[0], "&"))  return 1;  /* Ignore singleton & */
@@ -393,7 +366,7 @@ int builtin_command(char **argv) {
 	}
 	for(int i=0; i<4; i++){ // type2
 		if(!strcmp(argv[0],type2[i])) {
-			return 0;
+			return 2;
 		} 
 	}
 	for(int i=0; i<3; i++){ // type3
@@ -450,19 +423,9 @@ int parseline(char *buf, char **argv)
     }
     //char* lim;
     argv[argc] = NULL;
-    
     if (argc == 0) return 1; /* Ignore blank line */
-    
     /* Should the job run in the background? */
-    if ((bg = (*argv[argc-1] == '&')) != 0) argv[--argc] = NULL;
-    /*
-	for(int i=0; i<argc; i++){
-		printf("%s ",argv[i]);
-	}
-			printf("\n");
-			fflush(stdout);
-			*/
-			
+    if ((bg = (*argv[argc-1] == '&')) != 0) argv[--argc] = NULL;			
     return bg;
 }
 
