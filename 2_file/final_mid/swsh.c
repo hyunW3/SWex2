@@ -92,7 +92,8 @@ int main()
 	signal(SIGINT,al);
 	signal(20,al);
 	signal(SIGCHLD,CHLD_al);
-	getcwd(pwd,sizeof(pwd));
+	char* c =getcwd(pwd,sizeof(pwd));
+	if(c == NULL) fprintf(stderr,"cannot get cwd\n");
 	/* Read */
     shellstart();
    return 0;
@@ -102,7 +103,9 @@ int main()
 void branch(int check, char** argv,int bg){
 	pid_t pid;
 		if(check == 1){
-			if(strcmp(argv[0],"man")){ // not man
+			if(strcmp(argv[0],"man") !=0){ // not man 
+			
+				if( strcmp(argv[0],"bc") !=0) { // not bc
 				pid=fork();
 				if(gpid == 0) gpid = pid;
 				if(pid==0) gpid = getpgid(getpid());
@@ -111,7 +114,13 @@ void branch(int check, char** argv,int bg){
 				}
 				setpgid(pid,gpid);
 				wait(NULL);
-			} else {
+				} else { // is bc
+					if((pid=fork() == 0)){
+						execvp(argv[0],argv);
+					}
+					wait(NULL);
+				}
+			} else { // is man
 				if((pid=fork() == 0)){
 					execvp(argv[0],argv);
 				}
