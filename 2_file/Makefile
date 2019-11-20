@@ -31,3 +31,4 @@ $(TARGET) : $(OBJECTS)
 
 clean:
 	rm -f $(OBJECTS) $(TARGET)
+	rm -f cp cat head tail
