@@ -80,19 +80,16 @@ int main(int argc, char** argv) {
 			fd =dup(0);
 			file_size = MAXARGS*num;
 			print_file(argc,fd,file_size,num);
-		} else {
-			int i=3;
-			for(; argv[i] != NULL; i++){ // to get multiple input			
-				stat(argv[i],&file_info);
-				file_size = file_info.st_size;
-				fd = open(argv[i], O_RDONLY);
-				if(fd<0){
-					perror(argv[i]);
+		} else {			
+			stat(argv[3],&file_info);
+			file_size = file_info.st_size;
+			fd = open(argv[3], O_RDONLY);
+			if(fd<0){
+				perror(argv[3]);
 					
-				}else {
-					print_file(argc,fd,file_size,num);
-				}	
-			}
+			}else {
+				print_file(argc,fd,file_size,num);
+			}	
 		}
 	} else { // no option
 		if(argv[1] == NULL){
@@ -100,18 +97,15 @@ int main(int argc, char** argv) {
 			file_size = MAXARGS*num;	
 			print_file(argc,fd,file_size,num);		
 		} else {
-			int i=1;
-			for(; argv[i] != NULL; i++){ // to get multiple input
-				fd = open(argv[i], O_RDONLY);
-				if(fd <0){
-					perror(argv[i]);
-				}else {
-					stat(argv[i],&file_info);
-					file_size = file_info.st_size;
-					print_file(argc,fd,file_size,num);
+			fd = open(argv[1], O_RDONLY);
+			if(fd <0){
+				perror(argv[1]);
+			}else {
+				stat(argv[1],&file_info);
+				file_size = file_info.st_size;
+				print_file(argc,fd,file_size,num);
 					
-				}	
-			}			
+			}				
 		}
 	}
 
