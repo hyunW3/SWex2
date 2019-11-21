@@ -6,6 +6,7 @@
 #include <strings.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <sys/wait.h>
 #define MAXLINE 80
 int main (int argc, char *argv[]) {
 	int n, listenfd, connfd, caddrlen;
@@ -36,7 +37,7 @@ int main (int argc, char *argv[]) {
 			printf ("accept() failed.\n");
 			continue;
 	}
-       int random = rand() % 100;
+       int random = rand() % 99+1;
 //        int random = 20;
 //        write(connfd,random,sizeof(int));
 
@@ -64,5 +65,6 @@ int main (int argc, char *argv[]) {
 		fflush(stdout);
 	}
 //	}
+//	wait(NULL);
    }
 }
