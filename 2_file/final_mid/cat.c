@@ -1,3 +1,4 @@
+// 2016310932 Bae HyunWoong
 #define MAXARGS  128
 #define MAXLINE	 256
 #include <stdio.h>
@@ -19,9 +20,10 @@ int main(int argc, char** argv){
 		file_size = MAXARGS*10;	
 		print_file(argv,fd,file_size);
 	} else {
-		for(int i=1; argv[i] != NULL; i++){
+		int i=1;
+		for(; argv[i] != NULL; i++){
 			struct stat file_info;
-			stat(argv[1],&file_info);
+			stat(argv[i],&file_info);
 			file_size = file_info.st_size;
 			fd = open(argv[i], O_RDONLY);
 			print_file(argv,fd,file_size);
@@ -34,14 +36,10 @@ void print_file(char** argv, int fd, int file_size){
 	char* s1 = (char*)malloc(sizeof(char)*file_size);
 	int result = read(fd,s1,sizeof(char)*file_size);
 	if(result != EOF){
-		//int trash = write(1,s1,sizeof(char)*(file_size-1));
 		int trash = write(1,s1,sizeof(char)*(result));
 		trash++;
 	} else {
 		fprintf(stderr,"%s: Cannot read file.\n",argv[1]);
 	}
-	//char* buf = "\n";
-	//assert( write(1,buf,sizeof(char)) < 0);
 	free(s1);
-	//write(1,"\n",sizeof(char));
 }

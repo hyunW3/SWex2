@@ -1,3 +1,4 @@
+// 2016310932 Bae HyunWoong
 //-----------------------------------------------------------
 //
 // SSE2033 : System Software Experiment 2 (Fall 2019)
@@ -51,7 +52,6 @@ void cd_command(char** argv){
 	int result = chdir(argv[1]);
 	if(result == 0){
 		// complete
-		//printf("move to %s\n",argv[1]);
 	} else if(result == -1){
 		//failed
 		error(argv[0],errno,argv[1]);
@@ -67,37 +67,16 @@ void rm_command(char** argv){
     }
 }
 void mv_command(char** argv){
-	//if(argv[2] == NULL || argv[1] == NULL) fprintf(stderr,"there's no newfile name\n");
-<<<<<<< HEAD
-	if(argv[3]!= NULL){
-=======
 	if(argv[3] == NULL){
->>>>>>> 8902b40f7c58bd14df0bf8c55111e6a472f8af44
 		int result = rename(argv[1],argv[2]);
 		if(result == 0){
 			// complete
 			printf("mv %s to %s\n",argv[1],argv[2]);
 		} else if(result == -1){
 			//failed
-<<<<<<< HEAD
-			error(errno);
-		}			
-	} /*
-	else { // multiple input
-		char* dir = (char*)malloc(sizeof(char)*MAXLINE);
-		for(int i=0; argv[i]; i++){
-			if(argv[i+1]==NULL){
-				dir = argv[i];
-			}
-		}
-
-	}
-	*/
-=======
 			error(argv[0],errno,argv[1]);
 		}			
 	} 
->>>>>>> 8902b40f7c58bd14df0bf8c55111e6a472f8af44
 
 }
 //type4

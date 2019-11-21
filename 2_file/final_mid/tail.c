@@ -92,5 +92,6 @@ void print_file(int argc, int fd, int file_size,int num){
 		if(s1[i] != NULL)	write(1,s1[i],strlen(s1[i]));
 		i++; j++;
 	}
+	fflush(stdout);
 }
 	
