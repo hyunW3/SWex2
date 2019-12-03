@@ -15,6 +15,7 @@
 #define MAX_KEYLEN 1024
 int max;
 int client_num=0;
+db_t* DB;
 
 void handler(int sig){
 
@@ -27,12 +28,14 @@ void *pthread_main(void *cfd){
 	int n; 
 	char buf[MAXLINE];
 	int connfd = *((int*)cfd);
+	printf("connfd:%d\n",connfd);
+	pthread_detach(pthread_self());
 	free(cfd);
 	int i=0;
 	if(client_num >= max){ // overcrowd client num
 		if(write(connfd,"Too many clients\n",17));
 		close(connfd);
-		pthread_exit(NULL);
+		//pthread_exit(NULL);
 		return NULL;
 	}else {
 		client_num++;
@@ -62,13 +65,13 @@ void *pthread_main(void *cfd){
 			}
 		} else {
 			if(write(1,"in connnect\n",12));
-			
 			if(!strncmp(buf,"DISCONNECT\n",11)){ // disconnect
 				if(write(connfd,"BYE\n",4));
 				memset(buf,'\0',sizeof(buf));
 				close(connfd);
 				client_num--;
-				pthread_exit(NULL);
+				return NULL;
+				//pthread_exit(NULL);
 			} else {
 				// db_get, db_put
 				// dealing PUT [a] [12], GET [a]
@@ -79,7 +82,7 @@ void *pthread_main(void *cfd){
 				int cnt, key_len, val_len;
 				// parse "buf" GET [KEY]
 				char *p1 = strchr(buf,'[');
-				if((p1+1) != NULL) p1 +=1;
+				if((p1!= NULL)&&(p1+1) != NULL) p1 +=1;
 				else {
 					if(write(connfd,"UNDEFINED PROTOCOL\n",19)); //client 
 					memset(buf,'\0',sizeof(buf));
@@ -184,7 +187,7 @@ int main(int argc, char** argv){ // ./server 8888 6 128
 	int port =atoi ( argv [1]); // 8888
 	//time_t t;
 	//pthread_t client; // client number
-	pthread_t client[max];
+	pthread_t client[max+1];
 	if (( listenfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
 		printf ("socket() failed.\n");
 		exit(1);
@@ -222,7 +225,9 @@ int main(int argc, char** argv){ // ./server 8888 6 128
 		//pthread_create(&client, NULL, pthread_main, connfd);
 		//pthread_detach(client);
 		pthread_create(&client[client_num], NULL, pthread_main, connfd);
-		pthread_detach(client[client_num]);
+		printf("client_num:%d\n",client_num+1);
+		//pthread_detach(client[client_num]);
 	}
-
+	db_close(DB);
+	printf("\nyou DB closed\n");
 }

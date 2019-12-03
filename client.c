@@ -7,18 +7,6 @@
 #include <unistd.h>
 
 #define MAXLINE 128
-pthread_mutex_t lock;
-typedef struct {
-	char buf[MAXLINE];
-	int fd;
-	int sp;
-	int count;
-	pthread_mutex_t lock;
-	pthread_cond_t notfull;
-	pthread_cond_t notempty;
-} data;
-void *pthread_send(void *fd);
-void *pthread_write(void *fd);
 
 int main (int argc, char *argv[]) { // ./client 127.0.0.1 8888
 	int n, cfd;
@@ -42,7 +30,6 @@ int main (int argc, char *argv[]) { // ./client 127.0.0.1 8888
 	saddr.sin_family= AF_INET;
 	bcopy((char *)h->h_addr, (char *)&saddr.sin_addr.s_addr, h->h_length);
 	saddr.sin_port= htons(port);
-	pthread_t psend,pwrite;
 	if (connect(cfd,(struct sockaddr*)&saddr,sizeof(saddr)) < 0) {
 		printf("connect() failed.\n");
 		exit(3);

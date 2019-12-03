@@ -25,7 +25,9 @@
 
 #define MAXSIZE 100000
 int* reader_num;
+int access_num=0;
 pthread_mutex_t read_lock = PTHREAD_MUTEX_INITIALIZER; 
+pthread_cond_t empty = PTHREAD_COND_INITIALIZER;
 //pthread_mutex_t write_lock = PTHREAD_MUTEX_INITIALIZER; 
 pthread_mutex_t file_lock= PTHREAD_MUTEX_INITIALIZER;
 
@@ -50,7 +52,6 @@ unsigned int hash(char *key,int length, int Lsize){
 db_t *db_open(int size)
 {
 	mkdir("./db",0777); // mk file directory
-	
 	int fd[2];
 	if(pipe(fd));
 	if(fork()==0){ // child
@@ -76,9 +77,8 @@ db_t *db_open(int size)
 			num = atoi(cat);
 			//printf("num:%d\n",num);			
 		}
-		close(fd[0]);
 	}
-
+	close(fd[0]);
 	db_t *db = NULL;
 	db = (db_t*)malloc(sizeof(db_t)*size);
 	Lsize = size;	
@@ -136,11 +136,11 @@ void db_close(db_t *db)
 			}
 			(db+i)->next = NULL;
 		}
+	pthread_mutex_unlock(&file_lock);
 		free(buf1);
 		close(fd);
 		free(db);
 		free(reader_num);
-	pthread_mutex_unlock(&file_lock);
 	pthread_mutex_destroy(&entry_lock);	
 	pthread_mutex_destroy(&read_lock);
 	pthread_mutex_destroy(&file_lock);
@@ -181,6 +181,7 @@ write(1,"\nkey-",6);
 	int add=0;
 	printf("entry:%d, %d\n",entry,reader_num[entry]);
 	pthread_mutex_lock(&entry_lock[entry]);
+	access_num++;
 	while(cur->next != NULL){ 
 		cur = cur->next;
 		if(strcmp(cur->key,key) == 0) { // if in the table
@@ -195,47 +196,54 @@ write(1,"\nkey-",6);
 		sprintf(buf,"%s %d is add\n",new->key,new->value);
 		write(1,buf,strlen(buf));
 		table_num++;
-	}
+	}	
+	access_num--;
+	if(access_num ==0) pthread_cond_signal(&empty);
 	pthread_mutex_unlock(&entry_lock[entry]);
 	// table is full
 	printf("table_num:%d, Lsize:%d\n",table_num,Lsize);
-	if(table_num >= Lsize){
+	while(table_num >= Lsize){
+		/*
 		for(int i=0; i<Lsize; i++){
 			pthread_mutex_lock(&entry_lock[i]);
 		}
+		*/
 		char * buf1 = malloc(sizeof(char)*1300);
-	pthread_mutex_lock(&file_lock);	
+		pthread_mutex_lock(&file_lock);	
+		pthread_cond_wait(&empty,&file_lock);
 		num++;
 		sprintf(buf1,"./db/file-%d",num);
 		printf("db_put.buf1:%s\n",buf1);
-		int fd = open(buf1,O_RDWR | O_CREAT | O_TRUNC,0755);
-		int trash=0;
+		int fd = open(buf1,O_RDWR | O_CREAT | O_TRUNC,0755); 
+	
 		for(int i =0; i<Lsize; i++){
 			db_t* cu = (db+i); // to search table
 			db_t* tmp = cu->next;
 			if(tmp == NULL) continue;
 			for(cu = tmp; cu != NULL; cu = tmp) { // key/value
+				int trash;
 				sprintf(buf1,"%s/%d\n",cu->key,cu->value);
-				trash += write(fd,buf1,strlen(buf1));
+				trash = write(fd,buf1,strlen(buf1));
+				trash++;
 				tmp = cu->next;
 				//cu->key=NULL;
-
 				free(cu->key);  
 				//free(cu);
 			}
 			(db+i)->next = NULL;
 		}
-		close(fd);
-		if(trash <=0) {// write nothing but create
-			unlink(buf1);
-			num--;
-		}
 		free(buf1);
 		table_num=0;
+		//if(access_num ==0) 
+		pthread_cond_signal(&empty);
+	close(fd);
 	pthread_mutex_unlock(&file_lock);	
+	/*
 	for(int i=0; i<Lsize; i++){
 		pthread_mutex_unlock(&entry_lock[i]);
-	}		
+	}	
+	*/
+
 	}
 
 }
@@ -250,6 +258,7 @@ char *db_get(db_t *db, char *key, int key_len,
 	pthread_mutex_lock(&read_lock);
 	int entry = hash(key,key_len,Lsize);
 	reader_num[entry]++;	
+	access_num++;
 	if(reader_num[entry] ==1) pthread_mutex_lock(&entry_lock[entry]);
 	pthread_mutex_unlock(&read_lock);
 	printf("get_entry:%d, %d\n",entry,reader_num[entry]);
@@ -275,7 +284,9 @@ char *db_get(db_t *db, char *key, int key_len,
 	}
 	pthread_mutex_lock(&read_lock);
 	reader_num[entry]--;
+	access_num--;
 	if(reader_num[entry] ==0) pthread_mutex_unlock(&entry_lock[entry]);
+	if(access_num ==0) pthread_cond_signal(&empty);
 	printf("after get_entry:%d, %d\n",entry,reader_num[entry]);
 	pthread_mutex_unlock(&read_lock);
 
