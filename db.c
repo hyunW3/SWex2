@@ -76,7 +76,7 @@ db_t *db_open(int size)
 			num = atoi(cat);
 			//printf("num:%d\n",num);			
 		}
-		close(fd[0]);
+		//close(fd[0]);
 	}
 
 	db_t *db = NULL;

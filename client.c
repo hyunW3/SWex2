@@ -6,7 +6,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#define MAXLINE 128
+#define MAXLINE 256
 
 int main (int argc, char *argv[]) { // ./client 127.0.0.1 8888
 	int n, cfd;
@@ -35,23 +35,54 @@ int main (int argc, char *argv[]) { // ./client 127.0.0.1 8888
 		exit(3);
 	}else {
  	//send message
-
-		while((n = read(0,buf,MAXLINE))>0){
-			n = write(cfd,buf,n);
+	//while(1){
+	/*
+		while((n = read(0,buf,MAXLINE))>0){ // something in stdin
+			printf("\nbuf:%s",buf);
+			n = write(cfd,buf,n); // send server from stdin
 			memset(buf,'\0',sizeof(buf));
-			n = read(cfd,buf,MAXLINE);
-			if(n<0) break;
-			n = write(1,buf,n);
+			n = read(cfd,buf,MAXLINE); // read from server
+			if(n<0) return 0;
+			n = write(1,buf,n); // 
 			if(!strcmp(buf,"BYE\n")){
 				//eturn 0; // exit
-				break;
+				return 0;
 			} else if(!strcmp(buf,"Too many clients\n")){
-				break;
+				return 0;
 			}
 			memset(buf,'\0',sizeof(buf));				
-			
+		*/	
 
-		}
-	}
+		
+		
+	int i=0;
+		while((n = read(0,buf+i,1))>0) { // something in stdin
+			if(buf[i++] != '\n') continue; // until get \n
+			else buf[i] = '\0';
+			//printf("\nbuf:%s",buf);			
+			n = write(cfd,buf,i); // send server from stdin
+			memset(buf,'\0',sizeof(buf));
+			i=0;
+			while((n = read(cfd,buf+i,1))>0){ // read from server
+				if(buf[i++] != '\n') continue; // until get \n
+				else break;		
+			}
+			//printf("buf_serv:%s",buf);
+			n = write(1,buf,i); // 
+			if(!strcmp(buf,"BYE\n")){
+				//eturn 0; // exit
+				return 0;
+			} else if(!strcmp(buf,"Too many clients\n")){
+				return 0;
+			}
+			fflush(stdout);
+			memset(buf,'\0',sizeof(buf));
+			i=0;	
+		}	
+	//}
 	close(cfd);
+
+	}
+	
+	
 }	

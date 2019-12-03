@@ -15,7 +15,7 @@
 #define MAX_KEYLEN 1024
 int max;
 int client_num=0;
-db_t* DB;
+//db_t* DB;
 
 void handler(int sig){
 
@@ -65,6 +65,8 @@ void *pthread_main(void *cfd){
 			}
 		} else {
 			if(write(1,"in connnect\n",12));
+			//printf("buf:");
+			//write(1,buf,i);
 			if(!strncmp(buf,"DISCONNECT\n",11)){ // disconnect
 				if(write(connfd,"BYE\n",4));
 				memset(buf,'\0',sizeof(buf));
@@ -124,13 +126,12 @@ void *pthread_main(void *cfd){
 				if(!strncmp(buf,"GET",3)){ // db_get - read
 
 					val = db_get(DB, key, key_len, &val_len);
-					// VALUE PASSING IS NOT WORKING
-					if(val != NULL) printf("val:%d ",*(int*)val);
 					if (val == NULL) {
 						sprintf(send_data,"GETINV- %s\n",key);
 						//sprintf(send_data,"GETINV\n");
 						if(write(connfd,send_data,strlen(send_data)));
 					} else {
+						printf("val:%d ",*(int*)val);
 						sprintf(send_data,"GETOK [%s] [%d]\n", key, *((int*)val));
 						if(write(connfd,send_data,strlen(send_data)));
 						free(val);
@@ -170,12 +171,14 @@ void *pthread_main(void *cfd){
 			memset(buf,'\0',sizeof(buf));
 		}
 	}
+	close(connfd);
 	client_num--;
 	return NULL;
 }
 int main(int argc, char** argv){ // ./server 8888 6 128
 	signal(SIGINT,handler);
 	signal(20,handler);
+	//signal(SIGPIPE,SIG_IGN);
 	max = atoi(argv[2]); // 6
 	Lsize = atoi(argv[3]);
 	//int* fd_list = (int*)calloc(sizeof(int),max);
@@ -229,5 +232,5 @@ int main(int argc, char** argv){ // ./server 8888 6 128
 		//pthread_detach(client[client_num]);
 	}
 	db_close(DB);
-	printf("\nyou DB closed\n");
+	printf("\n2 DB closed\n");
 }
