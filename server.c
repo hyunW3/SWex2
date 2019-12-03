@@ -15,12 +15,9 @@
 #define MAX_KEYLEN 1024
 int max;
 int client_num=0;
-int reader_num=0;
-pthread_mutex_t read_lock = PTHREAD_MUTEX_INITIALIZER; 
-pthread_mutex_t write_lock = PTHREAD_MUTEX_INITIALIZER; 
+
 void handler(int sig){
-	pthread_mutex_destroy(&read_lock);
-	pthread_mutex_destroy(&write_lock);
+
 	//free(fd_list);
 	db_close(DB);
 	printf("\nDB closed\n");
@@ -122,14 +119,6 @@ void *pthread_main(void *cfd){
 				key_len = strlen(key);
 				//DB_GET = read
 				if(!strncmp(buf,"GET",3)){ // db_get - read
-					//write(1,"a\n",2);
-			//		pthread_mutex_lock(&read_lock);
-				//	write(1,"b\n",2);
-			//		reader_num++;
-			//		if(reader_num ==1) pthread_mutex_lock(&write_lock);
-				//	write(1,"c\n",2);
-			//		pthread_mutex_unlock(&read_lock);
-				//	write(1,"d\n",2);
 
 					val = db_get(DB, key, key_len, &val_len);
 					// VALUE PASSING IS NOT WORKING
@@ -142,11 +131,7 @@ void *pthread_main(void *cfd){
 						sprintf(send_data,"GETOK [%s] [%d]\n", key, *((int*)val));
 						if(write(connfd,send_data,strlen(send_data)));
 						free(val);
-					}
-			//		pthread_mutex_lock(&read_lock);
-			//		reader_num--;
-			//		if(reader_num ==0) pthread_mutex_unlock(&write_lock);
-			//		pthread_mutex_unlock(&read_lock);					
+					}				
 				} else if(!strncmp(buf,"PUT",3)){ // db_put - write
 					if(p2 == NULL){
 						if(write(connfd,"UNDEFINED PROTOCOL\n",19)); //client 
@@ -158,9 +143,9 @@ void *pthread_main(void *cfd){
 					//cnt = *((int*)val);
 					cnt = atoi(val);
 					//db_put(DB, key, key_len,(char *)&cnt , sizeof(int));
-					pthread_mutex_lock(&write_lock);
+					//pthread_mutex_lock(&write_lock);
 					db_put(DB, key, key_len, val , sizeof(int));
-					pthread_mutex_unlock(&write_lock);
+					//pthread_mutex_unlock(&write_lock);
 					//db_put(DB, key, key_len, val, sizeof(int));
 					sprintf(send_data,"PUT [%s] [%d]\n", key, cnt);
 						if(write(connfd,send_data,strlen(send_data)));

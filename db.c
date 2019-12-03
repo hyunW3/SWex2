@@ -24,6 +24,9 @@
 #include <wait.h>
 
 #define MAXSIZE 100000
+int* reader_num;
+pthread_mutex_t read_lock = PTHREAD_MUTEX_INITIALIZER; 
+pthread_mutex_t write_lock = PTHREAD_MUTEX_INITIALIZER; 
 pthread_mutex_t file_lock= PTHREAD_MUTEX_INITIALIZER;
 
 int table_num=0; // count for how many element in table
@@ -77,9 +80,10 @@ db_t *db_open(int size)
 	db = (db_t*)malloc(sizeof(db_t)*size);
 	Lsize = size;	
 	entry_lock = (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t)*size);
-
+	reader_num =(int*)malloc(sizeof(int)*size);
 	for(int i=0; i<size; i++){ // initializer
 		(db+i)->next = NULL;
+		reader_num[i]=0;
 		pthread_mutex_init(&entry_lock[i],NULL);
 	}
 	pthread_mutex_init(&file_lock,NULL);
@@ -127,6 +131,9 @@ void db_close(db_t *db)
 		free(buf1);
 		close(fd);
 		free(db);
+	pthread_mutex_destroy(&read_lock);
+	pthread_mutex_destroy(&write_lock);
+	pthread_mutex_destroy(&file_lock);
 }
 
 void db_put(db_t *db, char *key, int key_len,
@@ -136,7 +143,6 @@ write(1,key,strlen(key));
 write(1,"\n",1);
 write(1,val,16);
 write(1,"\nkey-",6);
-
 	// search the key
 	int entry = hash(key,key_len,Lsize);
 	db_t *cur = db+entry;
@@ -163,6 +169,7 @@ write(1,"\nkey-",6);
 	write(1,buf,strlen(buf));
 	write(1,"\n",1);
 	int add=0;
+	printf("entry:%d, %d\n",entry,reader_num[entry]);
 	pthread_mutex_lock(&entry_lock[entry]);
 	while(cur->next != NULL){ 
 		cur = cur->next;
@@ -183,7 +190,10 @@ write(1,"\nkey-",6);
 	// table is full
 	printf("table_num:%d, Lsize:%d\n",table_num,Lsize);
 	if(table_num >= Lsize){
-		
+		for(int i=0; i<Lsize; i++){
+			pthread_mutex_lock(&entry_lock[i]);
+
+		}
 		char * buf1 = malloc(sizeof(char)*1300);
 	pthread_mutex_lock(&file_lock);	
 		num++;
@@ -211,6 +221,10 @@ write(1,"\nkey-",6);
 		free(buf1);
 		table_num=0;
 	pthread_mutex_unlock(&file_lock);	
+	for(int i=0; i<Lsize; i++){
+		pthread_mutex_unlock(&entry_lock[i]);
+
+	}
 		close(fd);
 		
 	}
@@ -224,10 +238,15 @@ char *db_get(db_t *db, char *key, int key_len,
 {
 	//infile = 0;
 	char *value = NULL;
+	pthread_mutex_lock(&read_lock);
 	int entry = hash(key,key_len,Lsize);
+	reader_num[entry]++;	
+	if(reader_num[entry] ==1) pthread_mutex_lock(&entry_lock[entry]);
+	pthread_mutex_unlock(&read_lock);
+	printf("get_entry:%d, %d\n",entry,reader_num[entry]);
 	db_t *cur = db+entry;   
 	// in db, db[entry] and find it
-	pthread_mutex_lock(&entry_lock[entry]);
+	int flag=0;
 	if(cur->next != NULL){ // in db there is no data
 		//printf("find in table\n");
 		while(cur->next != NULL){
@@ -236,7 +255,8 @@ char *db_get(db_t *db, char *key, int key_len,
 				value = (char*)malloc(sizeof(char)*(cur->val_len+1));
 				*(int*)value = cur->value;
 				val_len = &cur->val_len;
-				return value;
+				flag=1;
+				//return value;
 			} 
 		} 		
 
@@ -244,13 +264,19 @@ char *db_get(db_t *db, char *key, int key_len,
 		//printf(" nothing...\n");
 		
 	}
-	pthread_mutex_unlock(&entry_lock[entry]);
+	pthread_mutex_lock(&read_lock);
+	reader_num[entry]--;
+	if(reader_num[entry] ==0) pthread_mutex_unlock(&entry_lock[entry]);
+	printf("after get_entry:%d, %d\n",entry,reader_num[entry]);
+	pthread_mutex_unlock(&read_lock);
+
+	if(flag==1) return value; //
 	// find in the file
 		printf("num:%d\n",num);
 	for(int k=num; k>=0; k--){
 		char *buf1 = malloc(sizeof(char)*MAXSIZE);
 		sprintf(buf1,"./db/file-%d",k);
-		printf("k:%d,buf1:%s\n",k,buf1);
+		//printf("k:%d,buf1:%s\n",k,buf1);
 		struct stat file_info;
 		stat(buf1,&file_info);
 		int file_size = file_info.st_size;
