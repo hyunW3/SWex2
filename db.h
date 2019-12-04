@@ -19,7 +19,7 @@ void db_put(db_t *db, char *key, int key_len,
  * Stores the length of the array in *vallen */
 char *db_get(db_t *db, char *key, int key_len,
 			int *val_len);
-//db_t* DB;
+db_t* DB;
 
 // pthread lock 
 
