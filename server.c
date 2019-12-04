@@ -102,7 +102,13 @@ void *pthread_main(void *cfd){
 				strcpy(key,p1);
 				//write(1,key,strlen(key));
 				if(p2 != NULL){
-					p2 +=1;
+					if((p2+1) != NULL) p2 +=1;
+					else {
+						if(write(connfd,"UNDEFINED PROTOCOL\n",19)); //client 
+						memset(buf,'\0',sizeof(buf));
+						i=0;
+						continue;							
+					}
 					printf("p2:%s\n",p2);
 					end = strchr(p2,']');
 					if(end == NULL){
