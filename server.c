@@ -93,7 +93,6 @@ void *pthread_main(void *cfd){
 				end[0] = '\0';
 				strcpy(key,p1);
 				if(p2 != NULL){
-<<<<<<< HEAD
 					if((p2+1) != NULL) p2 +=1;
 					else {
 						if(write(connfd,"UNDEFINED PROTOCOL\n",19)); //client 
@@ -101,10 +100,8 @@ void *pthread_main(void *cfd){
 						i=0;
 						continue;							
 					}
-					printf("p2:%s\n",p2);
-=======
+					//printf("p2:%s\n",p2);
 					p2 +=1;
->>>>>>> 1aad20223d10e5eaceb60c323e6cd55e55140d31
 					end = strchr(p2,']');
 					if(end == NULL){
 						if(write(connfd,"UNDEFINED PROTOCOL\n",19)); //client 

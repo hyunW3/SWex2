@@ -201,10 +201,11 @@ void db_put(db_t *db, char *key, int key_len,
 			(db+i)->next = NULL;
 		}
 		close(fd);
+		/*
 		if(trash <=0) {// write nothing but create
 			unlink(buf1);
 			num--;
-		}
+		}*/
 		free(buf1);
 		table_num=0;
 	pthread_mutex_unlock(&file_lock);	
