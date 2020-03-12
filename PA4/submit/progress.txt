@@ -1,0 +1,18 @@
+DB opened 이후 바로 close 하면 file-0인데 크기가 0인 파일 생성 - table_num 체크
+
+GET[as] 치면 세크 폴트 -> file에서 크기가 0 파일 생성하지 않도록 함
+
+PUT[as][asd] 하면 atoi(asd)를 통해 PUT[as][0] 으로 출력된다. -> 일단 올바르지 않은 값을 넣지 않다고 하였으니 문제는 되지 않을듯하다
+
+num,table_num global variable -> lock check
+
+db_get 에서 for문에 file lock 거는게 맞는지! 
+
+db_close 에서 table_num ==0 체크하는거 write가 다 끝난 후에 해야되는거!
+
+write 하는 동안 read를 하면 기다려야된다.
+file-2,11,32 가 아무것도 들어있지않은 파일이 존재한다.
+file_size == 0이다, client 하나에서 ctrl+c 누르면 모두 스탑
+
+GET[a] [NULL]는 invalid 다!
+
