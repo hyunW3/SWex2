@@ -1,0 +1,77 @@
+
+Errors not completed
+error list
+<<<<<<< HEAD
+1. Errors not completed
+grep a 이후 ctrl+c 시 swsh> 두번 출력
+- rm folder : 오류 분류
+
+head a.1 | tail
+
+
+
+tail -n 3 a.1 | cd
+ls|sort
+cd error
+=======
+>>>>>>> 8902b40f7c58bd14df0bf8c55111e6a472f8af44
+
+cd < k (k is file of /home)
+./wordcount 128 < ../EMMA.word | cat
+ls | tail
+
+해야될 것
+
+1. error 분리했는데 확인
+2. tail 함수 수정 , tail 파일없을때 -stdin realloc
+<<<<<<< HEAD
+3. reaping child process -> cat ../EMMA.word 
+ps -aux 로 체크
+mv rm 여러개
+cp 여러개 / 
+=======
+ 
+tail -n 3../a.1
+
+
+./a.out | cat | tail
+
+../
+>>>>>>> 8902b40f7c58bd14df0bf8c55111e6a472f8af44
+
+additional
+mv  여러개
+cp 여러개 / 
+ls|sort
+head multi 안됨
+head a.1 ../a.12 -> 포기
+
+함
+1. 명령어 나누기
+rediection / pipe 확인 - 얼추된듯
+3. redirection - 거의 성공
+setgpid  - 설정
+1. cd 할떄 swsh /a/b/c> 와 같이 directory 표현
+3. reaping child process -> cat ../EMMA.word -ps -axj 로 체크- pgid
+rm  cat tail 여러개
+
+cd error
+		해결된 문제
+- ls | sort 이후 인풋 대기모드
+- ls | grep a 라고 하면 뒤에가 grea 로 변함 -> divide 함수 문제
+head a.1 | tail -n 10 로 하면 tail -n 까지만 파싱댐 - > divde 함수 고침
+divide 의 문제 앞쪽으로 시프트하는데 공간이 부족한 경우가 발생 -> 새로운  어레이 만들어서 해결
+cat a.1 | head 는 안댐 -> 됨
+tail -n 3 a.1 -> 출력 두줄 -> if(times>num) 으로 해결 본래 >=
+cat.c, cat 위치 없는데에서 cat 실행 안댐 -> 절대경로로 만들어서 보냄
+tail < a.1 에서 엔터 출력더됨 -> *(s1+file_size-1) 가아니라 *(s1+result-1)였다...
+-head a.1 | tail -n 10 값 출력 ㄴㄴ- 위랑 동일
+ls | head 는 되는데 ls | tail, ls | cat 해결 ㄴㄴ
+
+grep a 이후 ctrl+c 시 swsh> 두번 출력
+- rm folder : 오류 분류
+cat a.1 | grep "1"
+tail a.1 | grep 1 -> "in clude" 로 해야된다 -> parseline 수정
+tail -n 3 a.1 | cd -> cd 의 인자가 없어서 그랬음 tail -n 3 a.1 | cd db
+ls | tail
+pwd | cat | cat - 됨
